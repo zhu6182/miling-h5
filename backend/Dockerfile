@@ -9,4 +9,4 @@ COPY . .
 
 ENV PORT=8000
 
-CMD uvicorn test_main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
