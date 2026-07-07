@@ -15,7 +15,7 @@ services:
       - key: PYTHON_VERSION
         value: "3.11.0"
     region: singapore
-    repo: https://github.com/your-username/miling.git
+    repo: https://github.com/zhu6182/miling-h5.git
     rootDir: backend
 
   - type: web
@@ -28,7 +28,7 @@ services:
       - key: NODE_VERSION
         value: "18.17.0"
     region: singapore
-    repo: https://github.com/your-username/miling.git
+    repo: https://github.com/zhu6182/miling-h5.git
     rootDir: web
 
 databases:
