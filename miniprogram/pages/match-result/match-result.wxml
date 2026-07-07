@@ -1,0 +1,93 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">
+    <text>匹配分析中...</text>
+  </view>
+
+  <!-- 锁定状态：显示解锁按钮 -->
+  <block wx:elif="{{resultLocked}}">
+    <view class="locked-view">
+      <view class="locked-icon">🔒</view>
+      <view class="locked-title">匹配结果已锁定</view>
+      <view class="locked-desc">看完广告即可解锁完整匹配分析</view>
+      <view class="unlock-btn" bindtap="watchAdToUnlockMatch">
+        <text>👁 观看广告解锁</text>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{matchData}}">
+    <view class="match-header">
+      <view class="users-row">
+        <view class="user-badge">
+          <text class="avatar">{{userA[0]}}</text>
+          <text class="name">{{userA}}</text>
+          <text class="soul">{{matchData.soul_palace_a}}</text>
+        </view>
+        <view class="connector">
+          <text class="heart">✦</text>
+        </view>
+        <view class="user-badge">
+          <text class="avatar">{{userB[0]}}</text>
+          <text class="name">{{userB}}</text>
+          <text class="soul">{{matchData.soul_palace_b}}</text>
+        </view>
+      </view>
+      <view class="overall-score">
+        <text class="score-num" style="color: {{displayScoreColor}}">{{displayScore}}</text>
+        <text class="score-label">{{displayScoreLabel}}</text>
+      </view>
+      <view class="score-bar-wrapper">
+        <view class="score-bar">
+          <view class="score-fill" style="width: {{displayScore}}%; background: {{displayScoreColor}}"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="tab-bar">
+      <view class="tab {{activeTab === 'love' ? 'active' : ''}}" bindtap="switchTab" data-tab="love">
+        💖 姻缘
+      </view>
+      <view class="tab {{activeTab === 'career' ? 'active' : ''}}" bindtap="switchTab" data-tab="career">
+        💼 事业
+      </view>
+      <view class="tab {{activeTab === 'friendship' ? 'active' : ''}}" bindtap="switchTab" data-tab="friendship">
+        🤝 友谊
+      </view>
+      <view class="tab {{activeTab === 'mentor' ? 'active' : ''}}" bindtap="switchTab" data-tab="mentor">
+        🌟 贵人
+      </view>
+    </view>
+
+    <view class="dim-content">
+      <block wx:if="{{dimDisplay}}">
+        <view class="dim-card">
+          <view class="dim-score-row">
+            <text class="dim-icon">💖</text>
+            <text class="dim-name">姻缘匹配</text>
+            <text class="dim-score" style="color: {{dimDisplay.scoreColor}}">{{dimDisplay.score}}分</text>
+          </view>
+          <view class="tags-row">
+            <text class="tag" wx:for="{{dimDisplay.tags}}" wx:key="*this">{{item}}</text>
+          </view>
+          <view class="dim-summary">{{dimDisplay.summary}}</view>
+          <view class="dim-advice" wx:if="{{dimDisplay.advice}}">
+            <text class="advice-label">💡 相处建议</text>
+            <text class="advice-text">{{dimDisplay.advice}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view class="action-bar">
+      <view class="action-btn secondary" bindtap="addFriend" wx:if="{{userBId && matchData.dimensions}}">
+        <text>加为好友</text>
+      </view>
+      <view class="action-btn secondary" bindtap="onShareTap">
+        <text>📤 分享</text>
+      </view>
+      <view class="action-btn primary" bindtap="saveToAlbum">
+        <text>生成分享图</text>
+      </view>
+    </view>
+  </block>
+</view>

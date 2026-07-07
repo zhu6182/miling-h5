@@ -1,0 +1,178 @@
+<view class="container">
+  <view class="header">
+    <view class="title">
+      <text class="main-title">星运日记</text>
+      <text class="sub-title">· 每日星座运势 ·</text>
+    </view>
+    <view class="slogan">星辰指引，遇见更好的自己</view>
+  </view>
+
+  <block wx:if="{{!userInfo}}">
+    <view class="card welcome-card">
+      <view class="welcome-title">欢迎来到星运日记</view>
+      <view class="welcome-desc">输入你的生辰，探索专属星座运势</view>
+      <view class="btn-primary" bindtap="goLogin">立即登录 / 注册</view>
+    </view>
+  </block>
+
+  <block wx:elif="{{!hasChart && !loading && activeTab === 'my'}}">
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'my' ? 'active' : ''}}" data-tab="my" bindtap="switchTab">我的</view>
+      <view class="tab-item {{activeTab === 'helped' ? 'active' : ''}}" data-tab="helped" bindtap="switchTab">帮查</view>
+    </view>
+    <view class="card no-chart-card">
+      <view class="no-chart-icon">✨</view>
+      <view class="no-chart-title">还没有你的星盘</view>
+      <view class="no-chart-desc">输入生辰信息，生成你的专属星盘</view>
+      <view class="btn-primary" bindtap="goBirthInput">生成星盘</view>
+    </view>
+  </block>
+
+  <block wx:elif="{{activeTab === 'my' && hasChart && chart}}">
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'my' ? 'active' : ''}}" data-tab="my" bindtap="switchTab">我的</view>
+      <view class="tab-item {{activeTab === 'helped' ? 'active' : ''}}" data-tab="helped" bindtap="switchTab">帮查</view>
+    </view>
+
+    <view class="chart-overview" bindtap="goDetail" data-id="{{chart.id}}">
+      <view class="chart-header">
+        <text class="chart-name">{{chart.name}}</text>
+        <text class="chart-badge">默认星盘</text>
+      </view>
+      <view class="chart-info">
+        <view class="info-item">
+          <text class="info-label">守护星</text>
+          <text class="info-value text-gold">{{chart.soul_palace}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">星座元素</text>
+          <text class="info-value">{{chart.five_elements}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">生辰</text>
+          <text class="info-value">{{chart.solar_date}} {{chart.hour_name}}</text>
+        </view>
+      </view>
+      <view class="chart-action">
+        <text>查看完整星盘解读</text>
+        <text class="arrow">→</text>
+      </view>
+    </view>
+
+    <view wx:if="{{myCharts.length > 1}}" class="my-chart-list">
+      <view class="list-title">我的星盘</view>
+      <view class="chart-card" wx:for="{{myCharts}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+        <view class="chart-card-left">
+          <text class="chart-card-name">{{item.name}}</text>
+          <text class="chart-card-desc">{{item.solar_date}} {{item.hour_name}}</text>
+        </view>
+        <view class="chart-card-right">
+          <text class="arrow">→</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="quick-actions">
+      <view class="action-item fortune-action" bindtap="goFortune">
+        <text class="action-icon">🌟</text>
+        <text class="action-text">今日运势</text>
+      </view>
+      <view class="action-item" bindtap="goBirthInput">
+        <text class="action-icon">✨</text>
+        <text class="action-text">星盘解析</text>
+      </view>
+      <view class="action-item" bindtap="goBaziInput">
+        <text class="action-icon">🔮</text>
+        <text class="action-text">性格测试</text>
+      </view>
+      <view class="action-item kline-action" bindtap="goLifeKLine">
+        <text class="action-icon">📈</text>
+        <text class="action-text">运势曲线</text>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{activeTab === 'helped'}}">
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'my' ? 'active' : ''}}" data-tab="my" bindtap="switchTab">我的</view>
+      <view class="tab-item {{activeTab === 'helped' ? 'active' : ''}}" data-tab="helped" bindtap="switchTab">帮查</view>
+    </view>
+
+    <block wx:if="{{helpedCharts.length > 0}}">
+      <view class="helped-chart-list">
+        <view class="chart-card" wx:for="{{helpedCharts}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+          <view class="chart-card-left">
+            <text class="chart-card-name">{{item.remark || item.name}}</text>
+            <view class="chart-card-meta">
+              <text class="chart-card-tag">{{item.relation || '亲友'}}</text>
+              <text class="chart-card-desc">{{item.solar_date}} {{item.hour_name}}</text>
+            </view>
+            <text class="chart-card-info">{{item.five_elements}} · {{item.soul_palace}}宫</text>
+          </view>
+          <view class="chart-card-right">
+            <text class="arrow">→</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="card no-chart-card">
+        <view class="no-chart-icon">👥</view>
+      <view class="no-chart-title">还没有帮亲友生成的星盘</view>
+      <view class="no-chart-desc">帮亲友分析星盘，一键查看运势</view>
+      <view class="btn-primary" bindtap="goBirthInput">去生成</view>
+      </view>
+    </block>
+
+    <view class="quick-actions">
+      <view class="action-item" bindtap="goBirthInput">
+        <text class="action-icon">✨</text>
+        <text class="action-text">紫微排盘</text>
+      </view>
+      <view class="action-item" bindtap="goBaziInput">
+        <text class="action-icon">☯</text>
+        <text class="action-text">八字排盘</text>
+      </view>
+      <view class="action-item kline-action" bindtap="goLifeKLine">
+        <text class="action-icon">📈</text>
+        <text class="action-text">人生K线</text>
+      </view>
+      <view class="action-item">
+        <text class="action-icon">📋</text>
+        <text class="action-text">历史记录</text>
+      </view>
+    </view>
+  </block>
+
+  <view class="feature-section">
+    <view class="section-title">核心功能</view>
+    <view class="feature-grid">
+      <view class="feature-item">
+        <text class="feature-icon">🔮</text>
+        <text class="feature-name">星盘解析</text>
+        <text class="feature-desc">精准分析星座宫位分布</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">🌟</text>
+        <text class="feature-name">星座运势</text>
+        <text class="feature-desc">每日星座运势精准预测</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">🤖</text>
+        <text class="feature-name">AI解读</text>
+        <text class="feature-desc">智能星座性格分析</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">👥</text>
+        <text class="feature-name">缘分匹配</text>
+        <text class="feature-desc">星座配对指数分析</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">📈</text>
+        <text class="feature-name">运势曲线</text>
+        <text class="feature-desc">长期运势趋势分析</text>
+      </view>
+    </view>
+  </view>
+</view>

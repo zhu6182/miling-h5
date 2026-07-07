@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>命里管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a1a;
+            color: #e0e0f0;
+            min-height: 100vh;
+        }
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            width: 400px;
+        }
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 24px;
+            color: #c9a050;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #a0a0c0;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            color: #e0e0f0;
+        }
+        .login-btn {
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(135deg, #c9a050, #a07830);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .login-btn:hover {
+            opacity: 0.9;
+        }
+        .error-msg {
+            color: #f05050;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        /* Dashboard样式 */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background: rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 16px;
+        }
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #c9a050;
+            margin-bottom: 24px;
+        }
+        .sidebar-menu {
+            list-style: none;
+        }
+        .sidebar-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .sidebar-item.active {
+            background: rgba(201, 160, 80, 0.2);
+            color: #c9a050;
+        }
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #e0e0f0;
+            cursor: pointer;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #a0a0c0;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #c9a050;
+            margin-top: 8px;
+        }
+        .stat-change {
+            font-size: 14px;
+            color: #80c080;
+            margin-top: 4px;
+        }
+
+        /* 图表区域 */
+        .chart-section {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+
+        /* 用户列表 */
+        .table-container {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .search-input {
+            width: 200px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #e0e0f0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a0a0c0;
+            font-size: 14px;
+        }
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* 配置页面 */
+        .config-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .config-info {
+            flex: 1;
+        }
+        .config-label {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .config-desc {
+            font-size: 14px;
+            color: #a0a0c0;
+            margin-top: 4px;
+        }
+        .switch {
+            width: 48px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+        .switch.active {
+            background: #c9a050;
+        }
+        .switch-dot {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 10px;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+        }
+        .switch.active .switch-dot {
+            left: 26px;
+        }
+
+        .config-group {
+            margin-bottom: 32px;
+        }
+
+        .config-group-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #c9a050;
+            margin-bottom: 16px;
+            padding-left: 12px;
+            border-left: 4px solid #c9a050;
+        }
+
+        .config-input {
+            width: 280px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 14px;
+            color: #e0e0f0;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #c9a050;
+        }
+
+        .config-input.number {
+            width: 120px;
+            text-align: right;
+        }
+
+        .config-select {
+            width: 200px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 14px;
+            color: #e0e0f0;
+        }
+
+        .config-select:focus {
+            outline: none;
+            border-color: #c9a050;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a0c0;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录页面 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <div class="login-title">命里管理后台</div>
+                <div class="form-group">
+                    <label class="form-label">管理员账号</label>
+                    <input class="form-input" v-model="loginForm.email" placeholder="admin@mingli.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input class="form-input" type="password" v-model="loginForm.password" placeholder="请输入密码">
+                </div>
+                <button class="login-btn" @click="handleLogin" :disabled="loginLoading">
+                    {{ loginLoading ? '登录中...' : '登录' }}
+                </button>
+                <div v-if="loginError" class="error-msg">{{ loginError }}</div>
+            </div>
+        </div>
+
+        <!-- Dashboard页面 -->
+        <div v-else class="dashboard">
+            <div class="sidebar">
+                <div class="sidebar-title">命里后台</div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item" :class="{active: currentPage === 'dashboard'}" @click="currentPage = 'dashboard'">
+                        数据统计
+                    </li>
+                    <li class="sidebar-item" :class="{active: currentPage === 'users'}" @click="currentPage = 'users'">
+                        用户管理
+                    </li>
+                    <li class="sidebar-item" :class="{active: currentPage === 'config'}" @click="currentPage = 'config'">
+                        系统配置
+                    </li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <!-- 数据统计页 -->
+                <div v-if="currentPage === 'dashboard'">
+                    <div class="header">
+                        <div class="page-title">数据统计</div>
+                        <button class="logout-btn" @click="handleLogout">退出登录</button>
+                    </div>
+
+                    <div v-if="statsLoading" class="loading">加载中...</div>
+
+                    <div v-else>
+                        <!-- 统计卡片 -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">注册用户总数</div>
+                                <div class="stat-value">{{ stats.users?.total || 0 }}</div>
+                                <div class="stat-change">今日新增 {{ stats.users?.today_new || 0 }}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">今日活跃用户</div>
+                                <div class="stat-value">{{ stats.users?.active_today || 0 }}</div>
+                                <div class="stat-change">本周活跃 {{ stats.users?.active_week || 0 }}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">命盘总数</div>
+                                <div class="stat-value">{{ stats.charts?.total || 0 }}</div>
+                                <div class="stat-change">今日新增 {{ stats.charts?.today_new || 0 }}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">今日签到</div>
+                                <div class="stat-value">{{ stats.checkins?.today || 0 }}</div>
+                                <div class="stat-change">运势查看 {{ stats.fortune?.today_views || 0 }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 用户增长图表 -->
+                        <div class="chart-section">
+                            <div class="chart-title">用户增长趋势（30天）</div>
+                            <div class="chart-container">
+                                <canvas id="userChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 活跃度图表 -->
+                        <div class="chart-section">
+                            <div class="chart-title">活跃用户趋势（30天）</div>
+                            <div class="chart-container">
+                                <canvas id="activeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户管理页 -->
+                <div v-if="currentPage === 'users'">
+                    <div class="header">
+                        <div class="page-title">用户管理</div>
+                        <button class="logout-btn" @click="handleLogout">退出登录</button>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <input class="search-input" v-model="userSearch" placeholder="搜索用户" @input="loadUsers">
+                            <span>共 {{ userTotal }} 个用户</span>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>昵称</th>
+                                    <th>手机</th>
+                                    <th>命盘数</th>
+                                    <th>签到天数</th>
+                                    <th>最后活跃</th>
+                                    <th>注册时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="u in userList" :key="u.id">
+                                    <td>{{ u.id }}</td>
+                                    <td>{{ u.nickname }}</td>
+                                    <td>{{ u.phone || '-' }}</td>
+                                    <td>{{ u.charts_count }}</td>
+                                    <td>{{ u.checkin_total }}</td>
+                                    <td>{{ u.last_active_at || '-' }}</td>
+                                    <td>{{ u.created_at?.slice(0, 10) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 系统配置页 -->
+                <div v-if="currentPage === 'config'">
+                    <div class="header">
+                        <div class="page-title">系统配置</div>
+                        <button class="logout-btn" @click="handleLogout">退出登录</button>
+                    </div>
+
+                    <div v-if="configLoading" class="loading">加载中...</div>
+
+                    <template v-else>
+                        <div v-for="(items, groupName) in configGroups" :key="groupName" class="config-group">
+                            <div class="config-group-title">{{ groupName }}</div>
+                            
+                            <div v-for="item in items" :key="item.key" class="config-item">
+                                <div class="config-info">
+                                    <div class="config-label">{{ item.label }}</div>
+                                    <div class="config-desc">{{ item.description }}</div>
+                                </div>
+                                
+                                <!-- 开关类型 -->
+                                <div v-if="item.type === 'switch'" 
+                                     class="switch" 
+                                     :class="{active: item.value === 'true'}" 
+                                     @click="toggleConfig(item.key)">
+                                    <div class="switch-dot"></div>
+                                </div>
+                                
+                                <!-- 文本输入类型 -->
+                                <input v-else-if="item.type === 'text'" 
+                                       class="config-input" 
+                                       :value="item.value" 
+                                       @blur="updateConfigValue(item.key, $event.target.value)"
+                                       @keyup.enter="updateConfigValue(item.key, $event.target.value)"
+                                       :placeholder="item.description">
+                                
+                                <!-- 数字输入类型 -->
+                                <input v-else-if="item.type === 'number'" 
+                                       class="config-input number" 
+                                       type="number"
+                                       :value="item.value" 
+                                       @blur="updateConfigValue(item.key, $event.target.value)"
+                                       placeholder="请输入数字">
+                                
+                                <!-- 下拉选择类型 -->
+                                <select v-else-if="item.type === 'select'" 
+                                        class="config-select" 
+                                        :value="item.value"
+                                        @change="updateConfigValue(item.key, $event.target.value)">
+                                    <option v-for="opt in item.options" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, watch } = Vue;
+
+        const API_BASE = 'http://127.0.0.1:8000/api/v1';
+
+        createApp({
+            setup() {
+                const isLoggedIn = ref(false);
+                const token = ref(localStorage.getItem('admin_token') || '');
+                const loginForm = ref({ email: '', password: '' });
+                const loginLoading = ref(false);
+                const loginError = ref('');
+
+                const currentPage = ref('dashboard');
+                const stats = ref({});
+                const statsLoading = ref(false);
+
+                const userList = ref([]);
+                const userTotal = ref(0);
+                const userSearch = ref('');
+
+                const config = ref({});
+                const configGroups = ref({});
+                const configLoading = ref(false);
+
+                // 检查登录状态
+                if (token.value) {
+                    isLoggedIn.value = true;
+                    loadStats();
+                    loadConfig();
+                }
+
+                // 登录
+                async function handleLogin() {
+                    loginLoading.value = true;
+                    loginError.value = '';
+                    try {
+                        const res = await fetch(`${API_BASE}/admin/auth/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(loginForm.value)
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            token.value = data.token;
+                            localStorage.setItem('admin_token', data.token);
+                            isLoggedIn.value = true;
+                            loadStats();
+                            loadConfig();
+                        } else {
+                            loginError.value = data.detail || '登录失败';
+                        }
+                    } catch (e) {
+                        loginError.value = '网络错误';
+                    }
+                    loginLoading.value = false;
+                }
+
+                // 退出登录
+                function handleLogout() {
+                    localStorage.removeItem('admin_token');
+                    token.value = '';
+                    isLoggedIn.value = false;
+                }
+
+                // 加载统计数据
+                async function loadStats() {
+                    statsLoading.value = true;
+                    try {
+                        const res = await fetch(`${API_BASE}/admin/stats/dashboard`, {
+                            headers: { 'Authorization': `Bearer ${token.value}` }
+                        });
+                        if (res.ok) {
+                            stats.value = await res.json();
+                            renderCharts();
+                        }
+                    } catch (e) {
+                        console.error('加载统计失败', e);
+                    }
+                    statsLoading.value = false;
+                }
+
+                // 加载用户列表
+                async function loadUsers() {
+                    try {
+                        const url = `${API_BASE}/admin/users?page=1&limit=20${userSearch.value ? '&search=' + userSearch.value : ''}`;
+                        const res = await fetch(url, {
+                            headers: { 'Authorization': `Bearer ${token.value}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            userList.value = data.users;
+                            userTotal.value = data.total;
+                        }
+                    } catch (e) {
+                        console.error('加载用户失败', e);
+                    }
+                }
+
+                // 加载配置
+                async function loadConfig() {
+                    configLoading.value = true;
+                    try {
+                        const res = await fetch(`${API_BASE}/admin/config`, {
+                            headers: { 'Authorization': `Bearer ${token.value}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            // 扁平数据
+                            config.value = {};
+                            if (data.flat) {
+                                for (const [k, v] of Object.entries(data.flat)) {
+                                    config.value[k] = v.value;
+                                }
+                            }
+                            // 分组数据
+                            configGroups.value = data.groups || {};
+                        }
+                    } catch (e) {
+                        console.error('加载配置失败', e);
+                    }
+                    configLoading.value = false;
+                }
+
+                // 切换开关配置
+                async function toggleConfig(key) {
+                    const newValue = config.value[key] === 'true' ? 'false' : 'true';
+                    try {
+                        const res = await fetch(`${API_BASE}/admin/config`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ configs: { [key]: newValue } })
+                        });
+                        if (res.ok) {
+                            config.value[key] = newValue;
+                            // 更新分组数据中的值
+                            for (const groupName in configGroups.value) {
+                                const item = configGroups.value[groupName].find(i => i.key === key);
+                                if (item) {
+                                    item.value = newValue;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('更新配置失败', e);
+                    }
+                }
+
+                // 更新配置值（通用）
+                async function updateConfigValue(key, value) {
+                    try {
+                        const res = await fetch(`${API_BASE}/admin/config`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ configs: { [key]: value } })
+                        });
+                        if (res.ok) {
+                            config.value[key] = value;
+                            // 更新分组数据中的值
+                            for (const groupName in configGroups.value) {
+                                const item = configGroups.value[groupName].find(i => i.key === key);
+                                if (item) {
+                                    item.value = value;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('更新配置失败', e);
+                    }
+                }
+
+                // 渲染图表
+                function renderCharts() {
+                    // 用户增长图表
+                    const userCtx = document.getElementById('userChart');
+                    if (userCtx && stats.value.trends?.users_30d) {
+                        new Chart(userCtx, {
+                            type: 'line',
+                            data: {
+                                labels: stats.value.trends.users_30d.map(d => d.date.slice(5)),
+                                datasets: [{
+                                    label: '新增用户',
+                                    data: stats.value.trends.users_30d.map(d => d.count),
+                                    borderColor: '#c9a050',
+                                    tension: 0.3
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { grid: { color: 'rgba(255,255,255,0.1)' } },
+                                    y: { grid: { color: 'rgba(255,255,255,0.1)' } }
+                                }
+                            }
+                        });
+                    }
+
+                    // 活跃度图表
+                    const activeCtx = document.getElementById('activeChart');
+                    if (activeCtx && stats.value.trends?.active_30d) {
+                        new Chart(activeCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: stats.value.trends.active_30d.map(d => d.date.slice(5)),
+                                datasets: [{
+                                    label: '活跃用户',
+                                    data: stats.value.trends.active_30d.map(d => d.count),
+                                    backgroundColor: '#c9a050',
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { grid: { color: 'rgba(255,255,255,0.1)' } },
+                                    y: { grid: { color: 'rgba(255,255,255,0.1)' } }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 监听页面切换
+                watch(currentPage, (page) => {
+                    if (page === 'users') {
+                        loadUsers();
+                    }
+                });
+
+                return {
+                    isLoggedIn, loginForm, loginLoading, loginError,
+                    handleLogin, handleLogout,
+                    currentPage, stats, statsLoading,
+                    userList, userTotal, userSearch, loadUsers,
+                    config, configGroups, configLoading,
+                    toggleConfig, updateConfigValue
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

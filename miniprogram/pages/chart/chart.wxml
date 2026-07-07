@@ -1,0 +1,93 @@
+<view class="container">
+  <block wx:if="{{!hasLogin}}">
+    <view class="login-tip card">
+      <view class="tip-icon">👋</view>
+      <view class="tip-title">登录后使用匹配功能</view>
+      <view class="btn-primary" bindtap="goLogin">去登录</view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="match-header">
+      <view class="header-title">星运日记</view>
+      <view class="header-sub">星座配对，看看缘分</view>
+    </view>
+
+    <view class="match-type-selector">
+      <view class="type-label">选择匹配维度</view>
+      <view class="type-row">
+        <view class="type-item {{matchType === item.value ? 'active' : ''}}"
+              wx:for="{{matchTypes}}" wx:key="value"
+              bindtap="selectMatchType" data-type="{{item.value}}">
+          <view class="type-name">{{item.label}}</view>
+          <view class="type-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="action-cards">
+      <view class="action-card primary" bindtap="generateQR">
+        <view class="action-icon">📱</view>
+        <view class="action-content">
+          <view class="action-title">生成配对码</view>
+          <view class="action-desc">让对方扫一扫你的码</view>
+        </view>
+        <text class="action-arrow">→</text>
+      </view>
+
+      <view class="action-card" bindtap="scanQR">
+        <view class="action-icon">📷</view>
+        <view class="action-content">
+          <view class="action-title">扫码匹配</view>
+          <view class="action-desc">扫对方的配对码</view>
+        </view>
+        <text class="action-arrow">→</text>
+      </view>
+
+      <view class="action-card" bindtap="showComingSoon">
+        <view class="action-icon">📡</view>
+        <view class="action-content">
+          <view class="action-title">NFC 碰一碰</view>
+          <view class="action-desc">两部手机背靠背碰一下</view>
+        </view>
+        <view class="coming-tag">开发中</view>
+      </view>
+    </view>
+
+    <view class="match-history" wx:if="{{matchHistory.length > 0}}">
+      <view class="section-title">匹配记录</view>
+      <view class="history-list">
+        <view class="history-item" wx:for="{{matchHistory}}" wx:key="id"
+              bindtap="goMatchResult" data-id="{{item.id}}">
+          <view class="history-users">
+            <text class="user-name">{{item.user_a_nickname}}</text>
+            <text class="vs">✦</text>
+            <text class="user-name">{{item.user_b_nickname || '待配对'}}</text>
+          </view>
+          <view class="history-meta">
+            <view class="match-type-tag" wx:if="{{item.match_type === 'all'}}">全部分析</view>
+            <view class="match-type-tag love" wx:if="{{item.match_type === 'love'}}">姻缘</view>
+            <view class="match-type-tag career" wx:if="{{item.match_type === 'career'}}">事业</view>
+            <text class="history-score" wx:if="{{item.overall_score}}">{{item.overall_score}}分</text>
+            <text class="history-status {{item.status}}">{{item.status === 'accepted' ? '已配对' : item.status === 'pending' ? '待配对' : item.status}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view class="qr-modal" wx:if="{{showQRModal}}" catchtap="closeQRModal">
+    <view class="qr-content" catchtap="">
+      <view class="qr-title">分享配对码</view>
+      <view class="qr-desc">让对方扫码配对</view>
+      <view class="qr-image-wrapper">
+        <image class="qr-image" src="{{qrImageUrl}}" mode="aspectFit" />
+      </view>
+      <view class="qr-code-text">{{qrCode}}</view>
+      <view class="qr-tips">
+        <text>对方扫码后，你们的命盘将自动匹配分析</text>
+      </view>
+      <view class="close-btn" bindtap="closeQRModal">完成</view>
+    </view>
+  </view>
+</view>

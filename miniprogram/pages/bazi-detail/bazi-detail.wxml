@@ -1,0 +1,259 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">
+    <text>排盘中...</text>
+  </view>
+
+  <block wx:elif="{{bazi}}">
+    <view class="header-info">
+      <view class="header-title-row">
+        <text class="header-name">{{bazi.gender_cn}} · 八字命盘</text>
+      </view>
+      <view class="header-meta">
+        {{bazi.solar_date}} · {{bazi.hour_name}}
+      </view>
+      <view class="header-lunar">
+        农历：{{bazi.lunar_date}}
+      </view>
+      <view class="header-actions">
+        <view class="switch-type-btn" bindtap="goZiweiDetail">
+          查看紫微斗数 →
+        </view>
+        <view class="match-btn kline-btn" bindtap="goLifeKLine">
+          <text class="match-icon">📈</text>
+          <text>人生K线</text>
+        </view>
+        <view class="match-btn share-btn" bindtap="onShareTap">
+          <text class="match-icon">📤</text>
+          <text>分享</text>
+        </view>
+        <view class="match-btn" bindtap="openMatchSelector">
+          <text class="match-icon">👥</text>
+          <text>找人匹配</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="bazi-card">
+      <view class="pillars-header">
+        <view class="pillar-col">
+          <text class="pillar-label">年柱</text>
+        </view>
+        <view class="pillar-col">
+          <text class="pillar-label">月柱</text>
+        </view>
+        <view class="pillar-col pillar-day">
+          <text class="pillar-label">日柱</text>
+        </view>
+        <view class="pillar-col">
+          <text class="pillar-label">时柱</text>
+        </view>
+      </view>
+
+      <view class="pillars-gan">
+        <view class="pillar-col">
+          <text class="shi-shen-gan type-{{bazi.ganShiShenWithType.year.type}}">{{bazi.ganShiShenWithType.year.text}}</text>
+          <text class="gan-char" style="color: {{bazi.ganColorMap[bazi.pillars.year.gan]}}">{{bazi.pillars.year.gan}}</text>
+        </view>
+        <view class="pillar-col">
+          <text class="shi-shen-gan type-{{bazi.ganShiShenWithType.month.type}}">{{bazi.ganShiShenWithType.month.text}}</text>
+          <text class="gan-char" style="color: {{bazi.ganColorMap[bazi.pillars.month.gan]}}">{{bazi.pillars.month.gan}}</text>
+        </view>
+        <view class="pillar-col pillar-day">
+          <text class="shi-shen-gan type-day">日主</text>
+          <text class="gan-char day-master" style="color: {{bazi.ganColorMap[bazi.pillars.day.gan]}}">{{bazi.pillars.day.gan}}</text>
+        </view>
+        <view class="pillar-col">
+          <text class="shi-shen-gan type-{{bazi.ganShiShenWithType.hour.type}}">{{bazi.ganShiShenWithType.hour.text}}</text>
+          <text class="gan-char" style="color: {{bazi.ganColorMap[bazi.pillars.hour.gan]}}">{{bazi.pillars.hour.gan}}</text>
+        </view>
+      </view>
+
+      <view class="pillars-zhi">
+        <view class="pillar-col">
+          <text class="zhi-char" style="color: {{bazi.zhiColorMap[bazi.pillars.year.zhi]}}">{{bazi.pillars.year.zhi}}</text>
+        </view>
+        <view class="pillar-col">
+          <text class="zhi-char" style="color: {{bazi.zhiColorMap[bazi.pillars.month.zhi]}}">{{bazi.pillars.month.zhi}}</text>
+        </view>
+        <view class="pillar-col pillar-day">
+          <text class="zhi-char" style="color: {{bazi.zhiColorMap[bazi.pillars.day.zhi]}}">{{bazi.pillars.day.zhi}}</text>
+        </view>
+        <view class="pillar-col">
+          <text class="zhi-char" style="color: {{bazi.zhiColorMap[bazi.pillars.hour.zhi]}}">{{bazi.pillars.hour.zhi}}</text>
+        </view>
+      </view>
+
+      <view class="detail-table">
+        <view class="table-row" wx:for="{{bazi.tableRows}}" wx:key="label" wx:for-item="row">
+          <view class="row-label">
+            <text>{{row.label}}</text>
+          </view>
+          <view class="row-cells">
+            <view class="cell {{cellIndex === 2 ? 'cell-day' : ''}}" wx:for="{{row.cells}}" wx:key="index" wx:for-item="cell" wx:for-index="cellIndex">
+              <block wx:if="{{row.multiLine}}">
+                <view class="multi-item" wx:for="{{cell}}" wx:key="index" wx:for-item="item" wx:for-index="itemIndex">
+                  <block wx:if="{{row.label === '藏干'}}">
+                    <text class="hidden-gan {{itemIndex === 0 ? 'main' : 'sub'}}" style="color: {{item.color}}">{{item.text}}</text>
+                  </block>
+                  <block wx:elif="{{row.label === '副星'}}">
+                    <text class="zhi-shishen type-{{item.type}} {{itemIndex === 0 ? 'main' : 'sub'}}">{{item.text}}</text>
+                  </block>
+                </view>
+              </block>
+              <block wx:else>
+                <text class="single-text">{{cell}}</text>
+              </block>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="wuxing-card">
+      <view class="wuxing-card-header">
+        <text class="wuxing-card-title">五行分布</text>
+        <text class="wuxing-card-sub">{{bazi.wuxing.total}}个五行元素</text>
+      </view>
+      <view class="wuxing-bars">
+        <view class="wx-bar-row" wx:for="{{bazi.wuxingList}}" wx:key="key">
+          <view class="wx-bar-label">
+            <text class="wx-bar-name wx-{{item.key}}">{{item.name}}</text>
+          </view>
+          <view class="wx-bar-track">
+            <view class="wx-bar-fill fill-{{item.key}}" style="width: {{item.pct}}%">
+              <view class="wx-bar-glow"></view>
+            </view>
+          </view>
+          <view class="wx-bar-count">
+            <text class="wx-count-num">{{item.count}}</text>
+            <text class="wx-count-unit">个</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="info-section">
+      <view class="section-header">
+        <text class="section-title">神煞</text>
+      </view>
+      <view class="shensha-list">
+        <view class="shensha-tag" wx:for="{{bazi.shensha}}" wx:key="*this">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="info-section">
+      <view class="section-header">
+        <text class="section-title">大运</text>
+        <text class="section-sub">起运：{{bazi.dayun.start_year}}岁{{bazi.dayun.start_month}}月</text>
+      </view>
+      <view class="dayun-scroll">
+        <view class="dayun-item" wx:for="{{bazi.dayun.list}}" wx:key="index">
+          <text class="dayun-age">{{item.start_age}}岁</text>
+          <text class="dayun-ganzhi">{{item.ganzhi}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="reading-section">
+      <view class="section-header">
+        <text class="section-title">AI 解读</text>
+        <view class="generate-btn {{generating ? 'disabled' : ''}}" bindtap="generateReading">
+          <text wx:if="{{!reading && !generating}}">生成解读</text>
+          <text wx:elif="{{generating}}">生成中...</text>
+          <text wx:else>重新解读</text>
+        </view>
+      </view>
+
+      <block wx:if="{{reading}}">
+        <view class="reading-content">
+          <rich-text nodes="{{reading}}"></rich-text>
+        </view>
+      </block>
+
+      <view class="no-reading" wx:else>
+        <text class="no-reading-icon">✨</text>
+        <text class="no-reading-text">点击上方按钮，生成 AI 解读</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{showMatchModal}}" class="modal-mask" bindtap="closeMatchSelector">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">选择要匹配的命盘</text>
+        <view class="modal-close" bindtap="closeMatchSelector">×</view>
+      </view>
+      <view wx:if="{{chartsLoading}}" class="modal-loading">
+        <text>加载中...</text>
+      </view>
+      <view wx:elif="{{filteredCharts.length === 0}}" class="modal-empty">
+        <text class="empty-icon">📋</text>
+        <text class="empty-text">暂无其他命盘可匹配</text>
+        <view class="add-friend-btn" bindtap="openAddFriendChart">
+          <text class="add-icon">+</text>
+          <text>添加好友命盘</text>
+        </view>
+      </view>
+      <view wx:else>
+        <scroll-view class="chart-list" scroll-y>
+          <view class="chart-item" wx:for="{{filteredCharts}}" wx:key="id" bindtap="selectChartForMatch" data-id="{{item.id}}">
+            <view class="chart-item-left">
+              <text class="chart-item-name">{{item.remark || item.name}}</text>
+              <view class="chart-item-meta">
+                <text class="chart-item-gender">{{item.gender}}</text>
+                <text wx:if="{{item.bazi_display}}" class="chart-item-bazi">{{item.bazi_display}}</text>
+                <text wx:else class="chart-item-date">{{item.solar_date}} {{item.hour_name}}</text>
+              </view>
+            </view>
+            <text class="chart-item-arrow">→</text>
+          </view>
+        </scroll-view>
+        <view class="add-friend-btn" bindtap="openAddFriendChart">
+          <text class="add-icon">+</text>
+          <text>添加好友命盘</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showAddFriendModal}}" class="modal-mask" bindtap="closeAddFriendChart">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">添加好友命盘</text>
+        <view class="modal-close" bindtap="closeAddFriendChart">×</view>
+      </view>
+      <view class="friend-form">
+        <view class="form-item">
+          <text class="form-label">备注名</text>
+          <input class="form-input" placeholder="如：张三" value="{{friendName}}" bindinput="bindFriendNameInput" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">性别</text>
+          <view class="gender-switch">
+            <view class="gender-option {{friendGender === 'male' ? 'active' : ''}}" bindtap="switchFriendGender" data-gender="male">男</view>
+            <view class="gender-option {{friendGender === 'female' ? 'active' : ''}}" bindtap="switchFriendGender" data-gender="female">女</view>
+          </view>
+        </view>
+        <view class="form-item">
+          <text class="form-label">出生日期</text>
+          <picker mode="date" value="{{friendDate}}" bindchange="bindFriendDateInput">
+            <view class="form-picker">
+              {{friendDate || '请选择日期'}}
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        <view class="form-item">
+          <text class="form-label">出生时辰</text>
+          <picker mode="selector" range="{{['子时','丑时','寅时','卯时','辰时','巳时','午时','未时','申时','酉时','戌时','亥时']}}" value="6" bindchange="bindFriendHourInput">
+            <view class="form-picker">
+              {{friendHour || '请选择时辰'}}
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        <button class="submit-btn" bindtap="saveFriendChart">保存并匹配</button>
+      </view>
+    </view>
+  </view>
+</view>

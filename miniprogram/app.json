@@ -1,0 +1,53 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/fortune/fortune",
+    "pages/chart/chart",
+    "pages/chart-detail/chart-detail",
+    "pages/match-result/match-result",
+    "pages/birth-input/birth-input",
+    "pages/profile/profile",
+    "pages/bazi-detail/bazi-detail",
+    "pages/life-kline/life-kline"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#0a0a1a",
+    "navigationBarTitleText": "星运日记",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0a0a1a"
+  },
+  "tabBar": {
+    "color": "#666680",
+    "selectedColor": "#c9a050",
+    "backgroundColor": "#0f0f20",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "星盘",
+        "iconPath": "images/tab-chart.png",
+        "selectedIconPath": "images/tab-chart-active.png"
+      },
+      {
+        "pagePath": "pages/chart/chart",
+        "text": "配对",
+        "iconPath": "images/tab-match.png",
+        "selectedIconPath": "images/tab-match-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/tab-me.png",
+        "selectedIconPath": "images/tab-me-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "networkTimeout": {
+    "request": 60000,
+    "uploadFile": 60000,
+    "downloadFile": 60000
+  }
+}

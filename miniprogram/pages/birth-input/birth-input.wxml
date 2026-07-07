@@ -1,0 +1,90 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-title">输入你的生辰信息</view>
+    <view class="form-desc">精确到时辰，排盘更准确</view>
+
+    <view class="form-section">
+      <view class="section-label">排盘方式</view>
+      <view class="type-switch">
+        <view class="type-btn {{chartType === 'ziwei' ? 'active' : ''}}" bindtap="switchChartType" data-type="ziwei">
+          紫微斗数
+        </view>
+        <view class="type-btn {{chartType === 'bazi' ? 'active' : ''}}" bindtap="switchChartType" data-type="bazi">
+          八字四柱
+        </view>
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-label">历法类型</view>
+      <view class="type-switch">
+        <view class="type-btn {{solarLunar === 'solar' ? 'active' : ''}}" bindtap="switchSolarLunar" data-type="solar">
+          公历（阳历）
+        </view>
+        <view class="type-btn {{solarLunar === 'lunar' ? 'active' : ''}}" bindtap="switchSolarLunar" data-type="lunar">
+          农历（阴历）
+        </view>
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-label">出生日期</view>
+      <picker mode="date" value="{{solarDate}}" bindchange="onDateChange">
+        <view class="picker-input">
+          <text class="picker-text">{{dateText}}</text>
+          <text class="picker-icon">📅</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-section">
+      <view class="section-label">出生时辰</view>
+      <view class="hour-grid">
+        <view class="hour-item {{hourIndex === item.index ? 'hour-selected' : ''}}" 
+              wx:for="{{hours}}" wx:key="index" 
+              bindtap="selectHour" data-index="{{item.index}}">
+          <view class="hour-name">{{item.name}}</view>
+          <view class="hour-time">{{item.time}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-label">性别</view>
+      <view class="gender-switch">
+        <view class="gender-btn {{gender === '男' ? 'active' : ''}}" bindtap="selectGender" data-gender="男">
+          <text class="gender-icon">♂</text>
+          <text>男</text>
+        </view>
+        <view class="gender-btn {{gender === '女' ? 'active' : ''}}" bindtap="selectGender" data-gender="女">
+          <text class="gender-icon">♀</text>
+          <text>女</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-section">
+      <view class="section-label">查询对象</view>
+      <view class="type-switch">
+        <view class="type-btn {{ownerType === 'self' ? 'active' : ''}}" bindtap="switchOwnerType" data-type="self">
+          为自己查
+        </view>
+        <view class="type-btn {{ownerType === 'helped' ? 'active' : ''}}" bindtap="switchOwnerType" data-type="helped">
+          帮别人查
+        </view>
+      </view>
+      <view class="remark-input-wrap" wx:if="{{ownerType === 'helped'}}">
+        <input class="picker-input remark-input" placeholder="备注：如妈妈、老公、闺蜜" placeholder-class="picker-placeholder" value="{{remark}}" bindinput="onRemarkInput" />
+      </view>
+    </view>
+
+    <view class="submit-btn {{loading ? 'disabled' : ''}}" bindtap="submit">
+      <text wx:if="{{!loading}}">开始排盘</text>
+      <text wx:else>排盘中...</text>
+    </view>
+
+    <view class="tip">
+      <text>💡 不确定时辰？可以选大致时间段，后续可校准</text>
+    </view>
+  </view>
+</view>

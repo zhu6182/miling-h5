@@ -1,0 +1,121 @@
+<view class="fortune-page">
+  <!-- 日期显示 -->
+  <view class="date-section">
+    <text class="date-text">{{todayDate}}</text>
+    <text class="ganzhi-text">{{dayGanzhi}}</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-section">
+    <text>正在计算今日运势...</text>
+  </view>
+
+  <!-- 综合运势 -->
+  <view wx:else class="overall-section">
+    <view class="score-circle">
+      <text class="score-number">{{fortune.overall_score}}</text>
+      <text class="score-label">今日运势</text>
+    </view>
+    <text class="phrase">{{fortune.phrase}}</text>
+    <text class="chart-info">基于「{{fortune.chart_name || fortune.chart_remark || '我的星盘'}}」星盘分析</text>
+  </view>
+
+  <!-- 分维度运势 -->
+  <view wx:if="{{!loading}}" class="dimension-section">
+    <view class="dimension-item">
+      <text class="dimension-icon">💕</text>
+      <text class="dimension-label">爱情</text>
+      <view class="score-bar">
+        <view class="score-fill love" style="width: {{fortune.love_score}}%"></view>
+      </view>
+      <text class="dimension-score">{{fortune.love_score}}</text>
+    </view>
+    <view class="dimension-item">
+      <text class="dimension-icon">💼</text>
+      <text class="dimension-label">事业</text>
+      <view class="score-bar">
+        <view class="score-fill career" style="width: {{fortune.career_score}}%"></view>
+      </view>
+      <text class="dimension-score">{{fortune.career_score}}</text>
+    </view>
+    <view class="dimension-item">
+      <text class="dimension-icon">💰</text>
+      <text class="dimension-label">财运</text>
+      <view class="score-bar">
+        <view class="score-fill wealth" style="width: {{fortune.wealth_score}}%"></view>
+      </view>
+      <text class="dimension-score">{{fortune.wealth_score}}</text>
+    </view>
+    <view class="dimension-item">
+      <text class="dimension-icon">💪</text>
+      <text class="dimension-label">健康</text>
+      <view class="score-bar">
+        <view class="score-fill health" style="width: {{fortune.health_score}}%"></view>
+      </view>
+      <text class="dimension-score">{{fortune.health_score}}</text>
+    </view>
+  </view>
+
+  <!-- 今日建议 -->
+  <view wx:if="{{!loading}}" class="yiji-section">
+    <view class="yi-box">
+      <text class="yiji-title">今日推荐</text>
+      <view class="yiji-list">
+        <text class="yi-item" wx:for="{{fortune.do_list}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+    <view class="ji-box">
+      <text class="yiji-title">今日注意</text>
+      <view class="yiji-list">
+        <text class="ji-item" wx:for="{{fortune.avoid_list}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 幸运元素 -->
+  <view wx:if="{{!loading}}" class="lucky-section">
+    <view class="lucky-item">
+      <text class="lucky-icon">🎨</text>
+      <text class="lucky-label">幸运颜色</text>
+      <text class="lucky-value">{{fortune.lucky_color}}</text>
+    </view>
+    <view class="lucky-item">
+      <text class="lucky-icon">🔢</text>
+      <text class="lucky-label">幸运数字</text>
+      <text class="lucky-value">{{fortune.lucky_number}}</text>
+    </view>
+    <view class="lucky-item">
+      <text class="lucky-icon">🧭</text>
+      <text class="lucky-label">幸运方位</text>
+      <text class="lucky-value">{{fortune.lucky_direction}}</text>
+    </view>
+  </view>
+
+  <!-- 签到区域 -->
+  <view wx:if="{{!loading}}" class="checkin-section">
+    <view class="checkin-header">
+      <text class="checkin-title">每日签到</text>
+      <view class="checkin-stats">
+        <text class="stat-item">连续 {{checkinStatus.checkin_days}} 天</text>
+        <text class="stat-item">累计 {{checkinStatus.checkin_total}} 天</text>
+      </view>
+    </view>
+    <button class="checkin-btn {{checkinStatus.has_checkin_today ? 'disabled' : ''}}" 
+            bindtap="doCheckin" 
+            disabled="{{checkinStatus.has_checkin_today}}">
+      <text wx:if="{{checkinStatus.has_checkin_today}}">今日已签到 ✓</text>
+      <text wx:else>立即签到</text>
+    </button>
+    <view wx:if="{{checkinReward}}" class="reward-tip">
+      <text>🎉 {{checkinReward.title}} - {{checkinReward.bonus}}</text>
+    </view>
+  </view>
+
+  <!-- 分享按钮 -->
+  <button wx:if="{{!loading}}" class="share-btn" open-type="share">
+    分享今日运势给好友
+  </button>
+
+  <!-- 广告位（预留，条件显示） -->
+  <ad wx:if="{{enableAds}}" unit-id="{{bannerAdUnitId}}" ad-type="banner" class="ad-banner"></ad>
+</view>
