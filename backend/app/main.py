@@ -33,6 +33,9 @@ def health():
     return {"status": "healthy"}
 
 
+module_load_error = None
+module_load_traceback = None
+
 try:
     from app.core.config import settings
     from app.core.database import Base, engine, auto_migrate
@@ -52,6 +55,15 @@ try:
 
     print("All modules loaded successfully!")
 except Exception as e:
-    print(f"Warning: Some modules failed to load: {e}")
+    module_load_error = str(e)
     import traceback
-    traceback.print_exc()
+    module_load_traceback = traceback.format_exc()
+    print(f"Warning: Some modules failed to load: {e}")
+    print(module_load_traceback)
+
+
+@app.get("/debug/load-error")
+def load_error():
+    if module_load_error:
+        return {"error": module_load_error, "traceback": module_load_traceback}
+    return {"status": "all modules loaded successfully"}
