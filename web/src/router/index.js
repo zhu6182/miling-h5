@@ -36,24 +36,6 @@ const routes = [
     name: 'ChartDetail',
     component: () => import('@/pages/ChartDetail.vue'),
     meta: { showTabBar: false }
-  },
-  {
-    path: '/match-result/:id',
-    name: 'MatchResult',
-    component: () => import('@/pages/MatchResult.vue'),
-    meta: { showTabBar: false }
-  },
-  {
-    path: '/bazi-detail',
-    name: 'BaziDetail',
-    component: () => import('@/pages/BaziDetail.vue'),
-    meta: { showTabBar: false }
-  },
-  {
-    path: '/life-kline',
-    name: 'LifeKline',
-    component: () => import('@/pages/LifeKline.vue'),
-    meta: { showTabBar: false }
   }
 ]
 
