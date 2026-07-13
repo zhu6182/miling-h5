@@ -110,6 +110,14 @@
           <span class="menu-text">八字合缘</span>
           <span class="menu-arrow">→</span>
         </div>
+        <div class="menu-item" @click="toggleFriends">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">👥</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">我的好友</span>
+          <span class="menu-arrow">{{ showFriends ? '↑' : '→' }}</span>
+        </div>
         <div class="menu-item" @click="onFeedback">
           <div class="menu-icon-wrapper">
             <span class="menu-icon">💬</span>
@@ -125,6 +133,31 @@
           </div>
           <span class="menu-text">关于我们</span>
           <span class="menu-arrow">→</span>
+        </div>
+      </div>
+
+      <div v-if="showFriends" class="friends-section">
+        <div class="section-header">
+          <span class="section-icon">👥</span>
+          <span class="section-title">我的好友</span>
+          <span class="section-count">{{ friends.length }} 人</span>
+        </div>
+        <div v-if="friends.length === 0" class="empty-friends">
+          <span class="empty-icon">👋</span>
+          <span class="empty-text">暂无好友，去合缘配对添加吧</span>
+        </div>
+        <div v-else class="friends-list">
+          <div class="friend-item" v-for="f in friends" :key="f.friend_id">
+            <div class="friend-avatar">{{ f.nickname?.charAt(0) || '?' }}</div>
+            <div class="friend-info">
+              <div class="friend-name">{{ f.nickname }}</div>
+              <div class="friend-username">@{{ f.username }}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="edit-btn" @click="startEditRemark(f)">✏️</button>
+              <button class="delete-btn" @click="removeFriend(f.friend_id)">🗑️</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -149,6 +182,31 @@
       </div>
     </div>
   </div>
+
+  <!-- 备注编辑弹窗 -->
+  <Teleport to="body">
+    <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <span class="modal-title">修改备注</span>
+          <button class="modal-close" @click="showEditModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <input 
+            type="text" 
+            class="remark-input" 
+            v-model="editRemark" 
+            placeholder="输入备注名称"
+            maxlength="50"
+          />
+        </div>
+        <div class="modal-footer">
+          <button class="modal-cancel" @click="showEditModal = false">取消</button>
+          <button class="modal-confirm" @click="saveRemark">保存</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -166,6 +224,13 @@ const password = ref('')
 const confirmPassword = ref('')
 const loading = ref(false)
 const charts = ref([])
+
+// 好友相关
+const showFriends = ref(false)
+const friends = ref([])
+const editingFriend = ref(null)
+const editRemark = ref('')
+const showEditModal = ref(false)
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const userInfo = computed(() => authStore.user || {})
@@ -227,6 +292,56 @@ async function loadCharts() {
     chartCount.value = res.length
   } catch (e) {
     console.error('加载星盘列表失败', e)
+  }
+}
+
+// 好友相关
+async function toggleFriends() {
+  showFriends.value = !showFriends.value
+  if (showFriends.value) {
+    await loadFriends()
+  }
+}
+
+async function loadFriends() {
+  try {
+    const res = await request.get('/friends')
+    friends.value = res.friends || []
+  } catch (e) {
+    console.error('加载好友列表失败', e)
+  }
+}
+
+function startEditRemark(friend) {
+  editingFriend.value = friend
+  editRemark.value = friend.remark || ''
+  showEditModal.value = true
+}
+
+async function saveRemark() {
+  if (!editingFriend.value) return
+  try {
+    await request.put(`/friends/${editingFriend.value.friend_id}`, { remark: editRemark.value })
+    const idx = friends.value.findIndex(f => f.friend_id === editingFriend.value.friend_id)
+    if (idx !== -1) {
+      friends.value[idx].remark = editRemark.value
+      friends.value[idx].nickname = editRemark.value || friends.value[idx].nickname
+    }
+    showEditModal.value = false
+    alert('备注修改成功')
+  } catch (e) {
+    alert(e.response?.data?.detail || '修改失败')
+  }
+}
+
+async function removeFriend(friendId) {
+  if (!confirm('确定要删除这位好友吗？')) return
+  try {
+    await request.delete(`/friends/${friendId}`)
+    friends.value = friends.value.filter(f => f.friend_id !== friendId)
+    alert('删除成功')
+  } catch (e) {
+    alert(e.response?.data?.detail || '删除失败')
   }
 }
 
@@ -899,5 +1014,199 @@ onActivated(() => {
     padding: 14px;
     font-size: 15px;
   }
+}
+
+.friends-section {
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.empty-friends {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+  gap: 10px;
+}
+
+.empty-icon {
+  font-size: 48px;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+}
+
+.friend-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(212, 175, 55, 0.3));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gold-primary);
+}
+
+.friend-info {
+  flex: 1;
+}
+
+.friend-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.friend-username {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.section-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 85%;
+  max-width: 320px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.remark-input {
+  width: 100%;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 15px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.remark-input:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.modal-cancel {
+  flex: 1;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.modal-confirm {
+  flex: 1;
+  height: 40px;
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+  border: none;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 </style>

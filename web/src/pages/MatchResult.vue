@@ -167,6 +167,15 @@
             </div>
           </div>
         </div>
+
+        <button 
+          class="add-friend-btn" 
+          @click="handleAddFriend" 
+          :disabled="friendLoading || isFriend"
+        >
+          <span>{{ isFriend ? '✓ 已添加' : '➕' }}</span>
+          <span>{{ isFriend ? '已添加好友' : friendLoading ? '添加中...' : '加为好友' }}</span>
+        </button>
       </template>
     </div>
 
@@ -200,9 +209,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '@/utils/request'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(true)
 const matchData = ref(null)
 const starField = ref(null)
@@ -212,6 +223,11 @@ const showAIModal = ref(false)
 const aiLoading = ref(null)
 const aiContent = ref('')
 const aiModalTitle = ref('')
+
+// 好友相关
+const friendLoading = ref(false)
+const isFriend = ref(false)
+const targetUserId = ref(null)
 
 const matchResult = computed(() => matchData.value?.match_data || {})
 const dimensions = computed(() => matchResult.value.dimensions || {})
@@ -243,10 +259,43 @@ async function loadMatch() {
   try {
     const res = await request.get(`/match/${route.params.id}`)
     matchData.value = res
+    
+    const currentUserId = authStore.user?.id
+    if (currentUserId && res.user_a_id && res.user_b_id) {
+      targetUserId.value = res.user_a_id !== currentUserId ? res.user_a_id : res.user_b_id
+    }
+    
+    await checkFriendStatus()
   } catch (e) {
     console.error('加载配对数据失败', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function checkFriendStatus() {
+  if (!targetUserId.value) return
+  try {
+    const res = await request.get('/friends')
+    const friends = res.friends || []
+    isFriend.value = friends.some(f => f.friend_id === targetUserId.value)
+  } catch (e) {
+    console.error('检查好友状态失败', e)
+  }
+}
+
+async function handleAddFriend() {
+  if (!targetUserId.value || isFriend.value) return
+  
+  friendLoading.value = true
+  try {
+    await request.post('/friends', { friend_id: targetUserId.value })
+    isFriend.value = true
+    alert('添加好友成功')
+  } catch (e) {
+    alert(e.response?.data?.detail || '添加好友失败')
+  } finally {
+    friendLoading.value = false
   }
 }
 
@@ -862,5 +911,32 @@ onMounted(() => {
 
 .ai-content :deep(.good) {
   color: #34d399;
+}
+
+.add-friend-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+  border: none;
+  border-radius: 16px;
+  color: #1a1a2e;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 16px;
+}
+
+.add-friend-btn:active {
+  transform: scale(0.98);
+}
+
+.add-friend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

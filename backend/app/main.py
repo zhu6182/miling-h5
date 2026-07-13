@@ -39,7 +39,7 @@ module_load_traceback = None
 try:
     from app.core.config import settings
     from app.core.database import Base, engine, auto_migrate
-    from app.api import auth, users, charts, match, share, bazi, admin, fortune
+    from app.api import auth, users, charts, match, share, bazi, admin, fortune, friends
 
     Base.metadata.create_all(bind=engine)
     auto_migrate()
@@ -52,6 +52,7 @@ try:
     app.include_router(bazi.router, prefix="/api/v1")
     app.include_router(admin.router, prefix="/api/v1")
     app.include_router(fortune.router, prefix="/api/v1")
+    app.include_router(friends.router, prefix="/api/v1")
 
     print("All modules loaded successfully!")
 except Exception as e:
