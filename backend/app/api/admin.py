@@ -1020,6 +1020,7 @@ def get_user_list(
         "users": [
             {
                 "id": u.id,
+                "username": u.username,
                 "nickname": u.nickname,
                 "phone": u.phone,
                 "email": u.email,
