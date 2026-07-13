@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from datetime import datetime
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.api.deps import get_current_user
 from app.models.models import User, Friendship
 from app.schemas.schemas import UserResponse
 from pydantic import BaseModel
