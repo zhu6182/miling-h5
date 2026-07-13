@@ -1,148 +1,150 @@
 <template>
-  <div class="profile-page">
-    <div v-if="!isLoggedIn" class="profile-header">
-      <div class="avatar-placeholder">👤</div>
-      <button class="btn-primary mt-20" @click="showLoginModal = true">立即登录</button>
-    </div>
-
-    <div v-else class="container">
-      <div class="profile-header">
-        <div class="avatar">{{ user?.nickname?.charAt(0) || '星' }}</div>
-        <div class="nickname">{{ user?.nickname || '星运用户' }}</div>
-        <div class="phone">{{ user?.phone || '' }}</div>
-      </div>
-
-      <div class="menu-section">
-        <div class="menu-item" @click="$router.push('/birth-input')">
-          <span class="menu-icon">✨</span>
-          <span class="menu-text">新建星盘</span>
-          <span class="menu-arrow">›</span>
-        </div>
-
-        <div class="menu-item" @click="toggleFriends">
-          <span class="menu-icon">👥</span>
-          <span class="menu-text">我的好友</span>
-          <span v-if="friends.length" class="menu-count">{{ friends.length }}</span>
-          <span class="menu-arrow">›</span>
-        </div>
-
-        <div v-if="showFriends && friends.length > 0" class="friends-list">
-          <div v-for="friend in friends" :key="friend.user_id" class="friend-item">
-            <div class="friend-avatar">{{ friend.nickname?.charAt(0) || '友' }}</div>
-            <div class="friend-info">
-              <div class="friend-name">{{ friend.nickname }}</div>
-              <div class="friend-soul">{{ friend.soul_palace }}守护星</div>
+  <div class="page-container">
+    <div v-if="!isLoggedIn" class="login-section">
+      <div class="login-card">
+        <div class="card-glow"></div>
+        <div class="login-logo">
+          <div class="logo-ring">
+            <div class="logo-core">
+              <span class="logo-symbol">☽</span>
             </div>
-            <div class="friend-actions">
-              <button class="friend-btn match" @click="goMatchWithFriend(friend.user_id)">匹配</button>
-              <button class="friend-btn remove" @click="removeFriend(friend.user_id)">删除</button>
-            </div>
+            <div class="ring-orbit"></div>
           </div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">AI 设置</div>
-        <div class="ai-provider-row">
-          <button 
-            v-for="provider in aiProviders" 
-            :key="provider.id"
-            class="ai-provider-btn"
-            :class="{ active: aiProvider === provider.id }"
-            @click="selectAiProvider(provider.id)"
-          >
-            {{ provider.name }}
+        <h1 class="login-title">命里</h1>
+        <p class="login-desc">命理玄机，探索命运的奥秘</p>
+        <div class="form-tabs">
+          <button class="form-tab" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
+          <button class="form-tab" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">注册</button>
+        </div>
+        <div class="login-form">
+          <div class="input-wrap">
+            <label for="username" class="input-label">用户名</label>
+            <input type="text" id="username" class="login-input" v-model="username" placeholder="请输入用户名" autocomplete="username" />
+            <span class="input-icon">👤</span>
+          </div>
+          <div class="input-wrap">
+            <label for="password" class="input-label">密码</label>
+            <input type="password" id="password" class="login-input" v-model="password" placeholder="请输入密码" autocomplete="current-password" />
+            <span class="input-icon">🔒</span>
+          </div>
+          <div v-if="activeTab === 'register'" class="input-wrap">
+            <label for="confirmPassword" class="input-label">确认密码</label>
+            <input type="password" id="confirmPassword" class="login-input" v-model="confirmPassword" placeholder="确认密码" autocomplete="new-password" />
+            <span class="input-icon">🔒</span>
+          </div>
+          <button class="submit-btn" :class="{ disabled: loading }" @click="submit">
+            <span v-if="activeTab === 'login'">{{ loading ? '登录中...' : '登 录' }}</span>
+            <span v-else>{{ loading ? '注册中...' : '注 册' }}</span>
           </button>
         </div>
-        <div v-if="aiProvider !== 'mock'" class="ai-settings">
-          <div class="form-item">
-            <label class="form-label">API Key</label>
-            <input 
-              type="password" 
-              class="form-input" 
-              v-model="aiApiKey" 
-              placeholder="请输入 API Key"
-            />
-          </div>
-          <div class="form-item">
-            <label class="form-label">模型名称</label>
-            <input 
-              type="text" 
-              class="form-input" 
-              v-model="aiModel" 
-              placeholder="模型名称"
-            />
-          </div>
-          <div class="form-item">
-            <label class="form-label">Base URL</label>
-            <input 
-              type="text" 
-              class="form-input" 
-              v-model="aiBaseUrl" 
-              placeholder="API 地址"
-            />
-          </div>
-          <button class="save-btn" @click="saveAiSettings">保存设置</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">服务地址设置</div>
-        <div class="form-item">
-          <label class="form-label">后端服务地址</label>
-          <input 
-            type="text" 
-            class="form-input" 
-            v-model="serverBaseUrl" 
-            placeholder="后端服务地址"
-          />
-        </div>
-        <div style="display: flex; gap: 12rpx;">
-          <button class="btn-outline" @click="saveServerBaseUrl">保存</button>
-          <button class="btn-outline" @click="resetServerBaseUrl">恢复默认</button>
-        </div>
-      </div>
-
-      <button class="logout-btn" @click="logout">退出登录</button>
-
-      <div class="menu-item">
-        <span class="menu-icon">ℹ️</span>
-        <span class="menu-text">关于「星运日记」</span>
-        <span class="menu-arrow">›</span>
       </div>
     </div>
 
-    <div v-if="showLoginModal" class="login-modal" @click="showLoginModal = false">
-      <div class="modal-content-large" @click.stop>
-        <div class="close-modal" @click="showLoginModal = false">×</div>
-        <div class="modal-title-large">{{ isRegisterMode ? '注册账号' : '登录账号' }}</div>
-        <div class="modal-subtitle">{{ isRegisterMode ? '创建新账号开始探索' : '登录你的账号' }}</div>
-        
-        <div class="form-item">
-          <label class="form-label">手机号</label>
-          <input type="tel" class="form-input" v-model="loginPhone" placeholder="请输入手机号" />
+    <div v-else class="profile-content">
+      <div class="profile-header">
+        <div class="header-glow"></div>
+        <div class="user-info">
+          <div class="avatar">
+            <span class="avatar-icon">👤</span>
+            <div class="avatar-ring"></div>
+          </div>
+          <div class="user-detail">
+            <h2 class="user-name">{{ userInfo.nickname || '用户' }}</h2>
+            <p class="user-id">ID: {{ userInfo.id }}</p>
+          </div>
         </div>
-        
-        <div class="form-item">
-          <label class="form-label">密码</label>
-          <input type="password" class="form-input" v-model="loginPassword" placeholder="请输入密码" />
+        <button class="sign-out-btn" @click="signOut">退出登录</button>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-item">
+          <span class="stat-value">{{ userInfo.sign_days || 0 }}</span>
+          <span class="stat-label">签到天数</span>
+          <div class="stat-glow"></div>
         </div>
-
-        <div v-if="isRegisterMode" class="form-item">
-          <label class="form-label">昵称</label>
-          <input type="text" class="form-input" v-model="loginNickname" placeholder="请输入昵称" />
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ userInfo.coin || 0 }}</span>
+          <span class="stat-label">命币</span>
+          <div class="stat-glow"></div>
         </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ chartCount }}</span>
+          <span class="stat-label">命盘数</span>
+          <div class="stat-glow"></div>
+        </div>
+      </div>
 
-        <button 
-          class="btn-primary mt-20" 
-          :disabled="loading"
-          @click="handleAuth"
-        >
-          {{ loading ? '处理中...' : (isRegisterMode ? '注册' : '登录') }}
-        </button>
+      <div class="menu-card">
+        <div class="menu-item" @click="goTo('/chart-input')">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">☯</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">新建命盘</span>
+          <span class="menu-arrow">→</span>
+        </div>
+        <div class="menu-item" @click="goTo('/fortune')">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">📅</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">今日运势</span>
+          <span class="menu-arrow">→</span>
+        </div>
+        <div class="menu-item" @click="goTo('/life-kline')">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">📈</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">人生K线</span>
+          <span class="menu-arrow">→</span>
+        </div>
+        <div class="menu-item" @click="goTo('/match')">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">💑</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">八字合缘</span>
+          <span class="menu-arrow">→</span>
+        </div>
+        <div class="menu-item" @click="onFeedback">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">💬</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">意见反馈</span>
+          <span class="menu-arrow">→</span>
+        </div>
+        <div class="menu-item" @click="onAbout">
+          <div class="menu-icon-wrapper">
+            <span class="menu-icon">ℹ️</span>
+            <div class="icon-glow"></div>
+          </div>
+          <span class="menu-text">关于我们</span>
+          <span class="menu-arrow">→</span>
+        </div>
+      </div>
 
-        <div class="switch-mode" @click="isRegisterMode = !isRegisterMode">
-          {{ isRegisterMode ? '已有账号？去登录' : '没有账号？去注册' }}
+      <div v-if="charts.length > 0" class="charts-section">
+        <div class="section-header">
+          <span class="section-icon">📋</span>
+          <span class="section-title">我的命盘</span>
+          <span class="section-more" @click="goTo('/charts')">全部 →</span>
+        </div>
+        <div class="chart-list">
+          <div class="chart-item" v-for="c in charts" :key="c.id">
+            <div class="chart-info" @click="goTo(`/chart-detail/${c.id}`)">
+              <h4 class="chart-name">{{ c.name }}</h4>
+              <p class="chart-meta">{{ c.solar_date }} · {{ c.hour_name }}</p>
+            </div>
+            <div class="chart-actions">
+              <button class="delete-btn" @click.stop="deleteChart(c.id)">删除</button>
+              <span class="chart-arrow" @click="goTo(`/chart-detail/${c.id}`)">→</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -150,443 +152,752 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { request } from '@/utils/request'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isLoggedIn = ref(authStore.isLoggedIn)
-const user = ref(authStore.user)
-const friends = ref([])
-const showFriends = ref(false)
-
-const showLoginModal = ref(false)
-const isRegisterMode = ref(false)
-const loginPhone = ref('')
-const loginPassword = ref('')
-const loginNickname = ref('')
+const activeTab = ref('login')
+const username = ref('')
+const password = ref('')
+const confirmPassword = ref('')
 const loading = ref(false)
+const charts = ref([])
 
-const aiProvider = ref('mock')
-const aiApiKey = ref('')
-const aiModel = ref('gpt-3.5-turbo')
-const aiBaseUrl = ref('')
-const serverBaseUrl = ref('')
+const isLoggedIn = computed(() => authStore.isLoggedIn)
+const userInfo = computed(() => authStore.user || {})
+const chartCount = ref(0)
 
-const aiProviders = [
-  { id: 'mock', name: '内置' },
-  { id: 'volcengine', name: '豆包' },
-  { id: 'openai', name: 'OpenAI' },
-  { id: 'tongyi', name: '通义' }
-]
-
-async function loadFriends() {
-  try {
-    const res = await request.get('/match/friends/list')
-    friends.value = res || []
-  } catch (e) {
-    console.error('加载好友失败', e)
+async function checkLogin() {
+  if (authStore.token) {
+    try {
+      const res = await request.get('/users/me')
+      authStore.setUser(res)
+      loadCharts()
+    } catch (e) {
+      // token无效才登出，网络错误不清除登录状态
+      if (e.response?.status === 401) {
+        authStore.logout()
+      }
+    }
   }
 }
 
-function toggleFriends() {
-  showFriends.value = !showFriends.value
-}
-
-function goMatchWithFriend(friendId) {
-  router.push(`/match-result?friendId=${friendId}`)
-}
-
-async function removeFriend(friendId) {
-  if (!confirm('确定删除该好友？')) return
-  try {
-    await request.delete(`/match/friends/${friendId}`)
-    alert('已删除')
-    loadFriends()
-  } catch (e) {
-    console.error('删除好友失败', e)
-  }
-}
-
-function selectAiProvider(provider) {
-  aiProvider.value = provider
-  const defaults = {
-    mock: { model: '', baseUrl: '' },
-    volcengine: { model: 'doubao-pro-32k', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3' },
-    openai: { model: 'gpt-3.5-turbo', baseUrl: '' },
-    tongyi: { model: 'qwen-turbo', baseUrl: '' }
-  }
-  const def = defaults[provider] || { model: '', baseUrl: '' }
-  aiModel.value = def.model
-  aiBaseUrl.value = def.baseUrl
-}
-
-async function saveAiSettings() {
-  if (aiProvider.value !== 'mock' && !aiApiKey.value) {
-    alert('请输入 API Key')
+async function submit() {
+  if (!username.value || !password.value) {
+    alert('请输入用户名和密码')
     return
   }
-  try {
-    const res = await request.put('/users/me', {
-      ai_provider: aiProvider.value,
-      ai_api_key: aiApiKey.value,
-      ai_model: aiModel.value,
-      ai_base_url: aiBaseUrl.value
-    })
-    authStore.setUser(res)
-    user.value = res
-    alert('保存成功')
-  } catch (e) {
-    console.error('保存失败', e)
-  }
-}
-
-function saveServerBaseUrl() {
-  const url = serverBaseUrl.value.trim()
-  if (!url) {
-    alert('请输入服务地址')
-    return
-  }
-  localStorage.setItem('baseUrl', url)
-  alert('保存成功，刷新页面生效')
-}
-
-function resetServerBaseUrl() {
-  localStorage.removeItem('baseUrl')
-  serverBaseUrl.value = ''
-  alert('已恢复默认')
-}
-
-async function handleAuth() {
-  if (!loginPhone.value || !loginPassword.value) {
-    alert('请填写完整信息')
-    return
+  if (activeTab.value === 'register') {
+    if (!confirmPassword.value) {
+      alert('请确认密码')
+      return
+    }
+    if (password.value !== confirmPassword.value) {
+      alert('两次输入的密码不一致')
+      return
+    }
   }
   loading.value = true
   try {
-    if (isRegisterMode.value) {
-      await authStore.register(loginPhone.value, loginPassword.value, loginNickname.value)
-      alert('注册成功')
+    if (activeTab.value === 'login') {
+      const res = await request.post('/auth/login', { username: username.value, password: password.value })
+      authStore.setToken(res.access_token)
+      authStore.setUser(res.user)
     } else {
-      await authStore.login(loginPhone.value, loginPassword.value)
-      alert('登录成功')
+      const res = await request.post('/auth/register', { username: username.value, password: password.value })
+      authStore.setToken(res.access_token)
+      authStore.setUser(res.user)
     }
-    showLoginModal.value = false
-    isLoggedIn.value = true
-    user.value = authStore.user
-    loadFriends()
+    loadCharts()
   } catch (e) {
-    alert(e.detail || '操作失败')
+    alert(e.response?.data?.detail || '操作失败')
   } finally {
     loading.value = false
   }
 }
 
-async function logout() {
-  if (!confirm('确定要退出登录吗？')) return
-  authStore.logout()
-  isLoggedIn.value = false
-  user.value = null
-  friends.value = []
-  alert('已退出')
+async function loadCharts() {
+  try {
+    const res = await request.get('/charts')
+    charts.value = res.slice(0, 3)
+    chartCount.value = res.length
+  } catch (e) {
+    console.error('加载星盘列表失败', e)
+  }
 }
 
-onMounted(() => {
-  const customBaseUrl = localStorage.getItem('baseUrl')
-  if (customBaseUrl) {
-    serverBaseUrl.value = customBaseUrl
+function signOut() {
+  authStore.logout()
+  charts.value = []
+}
+
+function goTo(path) {
+  router.push(path)
+}
+
+async function deleteChart(chartId) {
+  if (!confirm('确定要删除这个命盘吗？')) return
+  try {
+    await request.delete(`/charts/${chartId}`)
+    loadCharts()
+    alert('删除成功')
+  } catch (e) {
+    alert(e.response?.data?.detail || '删除失败')
   }
-  if (isLoggedIn.value) {
-    aiProvider.value = user.value?.ai_provider || 'mock'
-    aiApiKey.value = user.value?.ai_api_key || ''
-    aiModel.value = user.value?.ai_model || 'gpt-3.5-turbo'
-    aiBaseUrl.value = user.value?.ai_base_url || ''
-    loadFriends()
+}
+
+function onFeedback() {
+  alert('意见反馈功能开发中')
+}
+
+function onAbout() {
+  alert('命里 v1.0.0\n星辰指引，遇见更好的自己')
+}
+
+const hasLoaded = ref(false)
+
+onMounted(() => {
+  if (!hasLoaded.value) {
+    checkLogin()
+    hasLoaded.value = true
+  }
+})
+
+onActivated(() => {
+  if (authStore.isLoggedIn && chartCount.value === 0) {
+    loadCharts()
   }
 })
 </script>
 
 <style scoped>
-.profile-page {
-  min-height: 100%;
+.login-section {
+  padding: 60px 24px;
 }
 
-.profile-header {
+.login-card {
+  background: rgba(18, 18, 35, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 48px 32px;
   text-align: center;
-  padding: 60rpx 0 40rpx;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
 }
 
-.avatar {
-  width: 120rpx;
-  height: 120rpx;
+.card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.login-logo {
+  margin-bottom: 24px;
+}
+
+.logo-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.logo-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(139, 92, 246, 0.15) 50%, transparent 70%);
   border-radius: 50%;
-  background: linear-gradient(135deg, #c9a050 0%, #e0b868 100%);
-  color: #1a1a2e;
-  font-size: 48rpx;
-  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20rpx;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
-.avatar-placeholder {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 0 50px rgba(139, 92, 246, 0.2); }
 }
 
-.nickname {
-  font-size: 34rpx;
+.logo-symbol {
+  font-size: 24px;
+}
+
+.ring-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 50%;
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.login-title {
+  font-family: 'Cinzel', serif;
+  font-size: 36px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 50%, var(--purple-secondary) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 12px;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.login-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+
+.form-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+
+.form-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+}
+
+.form-tab:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+}
+
+.form-tab.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+  color: var(--gold-primary);
   font-weight: 600;
-  color: #e0e0f0;
-  margin-bottom: 8rpx;
 }
 
-.phone {
-  font-size: 26rpx;
-  color: #8888a0;
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.menu-section {
-  margin-bottom: 24rpx;
+.input-wrap {
+  position: relative;
+}
+
+.input-label {
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-deep);
+  padding: 0 6px;
+  z-index: 1;
+}
+
+.login-input {
+  width: 100%;
+  padding: 16px 24px 16px 52px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-input:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.login-input::placeholder {
+  color: var(--text-dim);
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
+  color: #0a0a15;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 12px;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s;
+}
+
+.submit-btn:hover::before {
+  left: 100%;
+}
+
+.submit-btn:hover {
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
+}
+
+.submit-btn.disabled {
+  opacity: 0.6;
+}
+
+.profile-content {
+  padding: 0 24px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 0;
+  position: relative;
+}
+
+.header-glow {
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  background: rgba(212, 175, 55, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-ring {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 50%;
+}
+
+.avatar-icon {
+  font-size: 32px;
+}
+
+.user-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.user-id {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.sign-out-btn {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 20px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sign-out-btn:hover {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.stats-card {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 28px 0;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item {
+  text-align: center;
+  position: relative;
+}
+
+.stat-value {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold-primary);
+  display: block;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  display: block;
+}
+
+.stat-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-item:hover .stat-glow {
+  opacity: 1;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 48px;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.menu-card {
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 28rpx 32rpx;
-  background: rgba(20, 20, 45, 0.8);
-  border-radius: 20rpx;
-  margin-bottom: 12rpx;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.06);
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.menu-icon-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  margin-right: 16px;
 }
 
 .menu-icon {
-  font-size: 36rpx;
-  margin-right: 20rpx;
+  font-size: 22px;
+  position: relative;
+  z-index: 1;
+}
+
+.icon-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.menu-item:hover .icon-glow {
+  opacity: 1;
 }
 
 .menu-text {
   flex: 1;
-  font-size: 28rpx;
-  color: #e0e0f0;
-}
-
-.menu-count {
-  font-size: 24rpx;
-  color: #c9a050;
-  margin-right: 12rpx;
+  font-size: 15px;
+  color: var(--text-primary);
 }
 
 .menu-arrow {
-  font-size: 32rpx;
-  color: #666680;
+  font-size: 16px;
+  color: var(--text-dim);
 }
 
-.friends-list {
+.charts-section {
+  margin-bottom: 100px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-more {
+  font-size: 13px;
+  color: var(--gold-primary);
+  cursor: pointer;
+}
+
+.chart-list {
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.chart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.06);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chart-item:last-child {
+  border-bottom: none;
+}
+
+.chart-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.chart-info {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-top: 12rpx;
+  gap: 4px;
 }
 
-.friend-item {
+.chart-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.chart-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.chart-actions {
   display: flex;
   align-items: center;
-  padding: 24rpx;
-  background: rgba(30, 30, 60, 0.9);
-  border-radius: 16rpx;
+  gap: 12px;
 }
 
-.friend-avatar {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #c9a050 0%, #e0b868 100%);
-  color: #1a1a2e;
-  font-size: 32rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20rpx;
-}
-
-.friend-info {
-  flex: 1;
-}
-
-.friend-name {
-  font-size: 28rpx;
-  color: #e0e0f0;
-}
-
-.friend-soul {
-  font-size: 22rpx;
-  color: #8888a0;
-}
-
-.friend-actions {
-  display: flex;
-  gap: 12rpx;
-}
-
-.friend-btn {
-  padding: 12rpx 20rpx;
-  border-radius: 20rpx;
-  font-size: 22rpx;
+.delete-btn {
+  font-size: 12px;
+  color: #e06060;
+  background: rgba(224, 96, 96, 0.1);
+  border: 1px solid rgba(224, 96, 96, 0.2);
+  padding: 6px 12px;
+  border-radius: 12px;
   cursor: pointer;
-  border: none;
+  transition: all 0.3s ease;
 }
 
-.friend-btn.match {
-  background: rgba(201, 160, 80, 0.15);
-  color: #c9a050;
+.delete-btn:hover {
+  background: rgba(224, 96, 96, 0.15);
 }
 
-.friend-btn.remove {
-  background: rgba(244, 67, 54, 0.15);
-  color: #f44336;
-}
-
-.form-item {
-  margin-bottom: 24rpx;
-}
-
-.form-label {
-  display: block;
-  font-size: 26rpx;
-  color: #8888a0;
-  margin-bottom: 12rpx;
-}
-
-.form-input {
-  width: 100%;
-  background: rgba(10, 10, 26, 0.6);
-  border: 1rpx solid rgba(201, 160, 80, 0.2);
-  border-radius: 12rpx;
-  padding: 24rpx;
-  color: #e0e0f0;
-  font-size: 28rpx;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: #c9a050;
-}
-
-.ai-provider-row {
-  display: flex;
-  gap: 12rpx;
-  margin-bottom: 24rpx;
-  flex-wrap: wrap;
-}
-
-.ai-provider-btn {
-  flex: 1;
-  min-width: 120rpx;
-  padding: 16rpx;
-  text-align: center;
-  background: rgba(10, 10, 26, 0.6);
-  border: 1rpx solid rgba(201, 160, 80, 0.2);
-  border-radius: 12rpx;
-  color: #8888a0;
-  font-size: 24rpx;
+.chart-arrow {
+  font-size: 16px;
+  color: var(--gold-primary);
   cursor: pointer;
 }
 
-.ai-provider-btn.active {
-  border-color: #c9a050;
-  color: #c9a050;
-  background: rgba(201, 160, 80, 0.1);
-}
+@media (max-width: 380px) {
+  .profile-content {
+    padding: 0 14px;
+  }
 
-.ai-settings {
-  margin-top: 20rpx;
-}
+  .profile-header {
+    padding: 20px 0;
+  }
 
-.save-btn {
-  background: linear-gradient(135deg, #c9a050 0%, #e0b868 100%);
-  color: #1a1a2e;
-  border: none;
-  padding: 24rpx;
-  border-radius: 50rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 16rpx;
-}
+  .avatar {
+    width: 56px;
+    height: 56px;
+  }
 
-.logout-btn {
-  width: 100%;
-  padding: 24rpx;
-  background: transparent;
-  border: 1rpx solid rgba(244, 67, 54, 0.5);
-  color: #f44336;
-  border-radius: 50rpx;
-  font-size: 28rpx;
-  cursor: pointer;
-  margin-top: 40rpx;
-}
+  .avatar-icon {
+    font-size: 26px;
+  }
 
-.login-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
+  .user-info {
+    gap: 10px;
+  }
 
-.modal-content-large {
-  background: #1a1a2e;
-  border: 1rpx solid rgba(201, 160, 80, 0.2);
-  border-radius: 20rpx;
-  padding: 40rpx;
-  width: 85%;
-  max-width: 600rpx;
-  position: relative;
-}
+  .user-name {
+    font-size: 17px;
+  }
 
-.modal-title-large {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #e0e0f0;
-  text-align: center;
-  margin-bottom: 12rpx;
-}
+  .user-id {
+    font-size: 11px;
+  }
 
-.modal-subtitle {
-  font-size: 26rpx;
-  color: #8888a0;
-  text-align: center;
-  margin-bottom: 40rpx;
-}
+  .sign-out-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
 
-.close-modal {
-  position: absolute;
-  top: 20rpx;
-  right: 24rpx;
-  font-size: 36rpx;
-  color: #666680;
-  cursor: pointer;
-}
+  .stats-card {
+    padding: 20px 0;
+  }
 
-.switch-mode {
-  text-align: center;
-  font-size: 26rpx;
-  color: #c9a050;
-  margin-top: 24rpx;
-  cursor: pointer;
-}
+  .stat-value {
+    font-size: 22px;
+  }
 
-.mt-20 { margin-top: 20rpx; }
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-divider {
+    height: 36px;
+  }
+
+  .menu-item {
+    padding: 14px 14px;
+  }
+
+  .menu-icon-wrapper {
+    width: 34px;
+    height: 34px;
+    margin-right: 12px;
+  }
+
+  .menu-icon {
+    font-size: 19px;
+  }
+
+  .menu-text {
+    font-size: 14px;
+  }
+
+  .login-card {
+    padding: 36px 20px;
+  }
+
+  .login-title {
+    font-size: 30px;
+  }
+
+  .login-input {
+    padding: 14px 20px 14px 46px;
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
 </style>

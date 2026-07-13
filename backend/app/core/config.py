@@ -4,7 +4,7 @@ import os
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "星运日记 - 星座运势"
+    APP_NAME: str = "命里 - 八字命理"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
 

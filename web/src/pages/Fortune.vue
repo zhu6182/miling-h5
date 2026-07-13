@@ -1,480 +1,823 @@
 <template>
-  <div class="fortune-page container">
+  <div class="page-container">
+    <div class="star-field" ref="starField"></div>
+
     <div class="date-section">
-      <span class="date-text">{{ todayDate }}</span>
-      <span class="ganzhi-text">{{ dayGanzhi }}</span>
+      <div class="date-card">
+        <div class="date-left">
+          <span class="date-day">{{ todayDay }}</span>
+          <span class="date-month">{{ todayMonth }}</span>
+        </div>
+        <div class="date-right">
+          <span class="ganzhi-text">{{ dayGanzhi }}</span>
+          <span class="week-text">{{ todayWeek }}</span>
+        </div>
+        <div class="date-glow"></div>
+      </div>
     </div>
 
-    <div v-if="loading" class="loading-section">加载中...</div>
+    <div v-if="loading" class="loading-section">
+      <div class="loading-spinner">
+        <span class="spinner-ring"></span>
+        <span class="spinner-ring-second"></span>
+        <span class="spinner-core">☯</span>
+      </div>
+      <p class="loading-text">正在排盘测算...</p>
+    </div>
 
-    <div v-else>
+    <div v-else class="fortune-content">
       <div class="overall-section">
         <div class="score-circle">
-          <span class="score-number">{{ fortune.overall_score }}</span>
-          <span class="score-label">综合评分</span>
-        </div>
-        <span class="phrase">{{ fortune.phrase }}</span>
-        <span class="chart-info-text">基于「{{ fortune.chart_name || '我的星盘' }}」星盘分析</span>
-      </div>
-
-      <div class="dimension-section">
-        <div class="section-title">运势维度</div>
-        <div class="dimension-item">
-          <span class="dimension-icon">❤️</span>
-          <span class="dimension-label">爱情</span>
-          <div class="score-bar">
-            <div class="score-fill love" :style="{ width: fortune.love_score + '%' }"></div>
+          <div class="circle-ring">
+            <div class="circle-progress" :style="{ '--progress': fortune.overall_score / 100 }"></div>
+            <div class="circle-inner">
+              <span class="score-number">{{ fortune.overall_score }}</span>
+              <span class="score-label">运势指数</span>
+            </div>
           </div>
-          <span class="dimension-score">{{ fortune.love_score }}</span>
+          <div class="score-glow"></div>
+          <div class="score-glow-secondary"></div>
         </div>
-        <div class="dimension-item">
-          <span class="dimension-icon">💼</span>
-          <span class="dimension-label">事业</span>
-          <div class="score-bar">
-            <div class="score-fill career" :style="{ width: fortune.career_score + '%' }"></div>
-          </div>
-          <span class="dimension-score">{{ fortune.career_score }}</span>
-        </div>
-        <div class="dimension-item">
-          <span class="dimension-icon">💰</span>
-          <span class="dimension-label">财运</span>
-          <div class="score-bar">
-            <div class="score-fill wealth" :style="{ width: fortune.wealth_score + '%' }"></div>
-          </div>
-          <span class="dimension-score">{{ fortune.wealth_score }}</span>
-        </div>
-        <div class="dimension-item">
-          <span class="dimension-icon">💪</span>
-          <span class="dimension-label">健康</span>
-          <div class="score-bar">
-            <div class="score-fill health" :style="{ width: fortune.health_score + '%' }"></div>
-          </div>
-          <span class="dimension-score">{{ fortune.health_score }}</span>
+        <div class="score-tags">
+          <span class="score-tag">{{ getScoreLevel(fortune.overall_score) }}</span>
+          <span class="score-tag secondary">{{ fortune.lucky_color }}</span>
         </div>
       </div>
 
-      <div class="yiji-section">
-        <div class="yi-box">
-          <span class="yiji-title">今日推荐</span>
-          <div class="yiji-list">
-            <span v-for="item in fortune.do_list" :key="item" class="yi-item">{{ item }}</span>
-          </div>
-        </div>
-        <div class="ji-box">
-          <span class="yiji-title">今日注意</span>
-          <div class="yiji-list">
-            <span v-for="item in fortune.avoid_list" :key="item" class="ji-item">{{ item }}</span>
+      <div class="dimensions-section">
+        <h3 class="section-title">
+          <span class="title-icon">☯</span>
+          运势维度
+        </h3>
+        <div class="dimensions-grid">
+          <div class="dimension-card" v-for="dim in dimensions" :key="dim.name">
+            <div class="dim-header">
+              <span class="dim-icon">{{ dim.icon }}</span>
+              <span class="dim-name">{{ dim.name }}</span>
+            </div>
+            <div class="dim-bar-container">
+              <div class="dim-bar-track">
+                <div class="dim-bar-fill" :class="dim.color" :style="{ width: dim.value + '%' }"></div>
+              </div>
+              <span class="dim-value">{{ dim.value }}%</span>
+            </div>
+            <div class="dim-glow" :class="dim.color"></div>
           </div>
         </div>
       </div>
 
-      <div class="lucky-section">
-        <div class="lucky-item">
-          <span class="lucky-icon">🎨</span>
-          <span class="lucky-label">幸运颜色</span>
-          <span class="lucky-value">{{ fortune.lucky_color }}</span>
-        </div>
-        <div class="lucky-item">
-          <span class="lucky-icon">🔢</span>
-          <span class="lucky-label">幸运数字</span>
-          <span class="lucky-value">{{ fortune.lucky_number }}</span>
-        </div>
-        <div class="lucky-item">
-          <span class="lucky-icon">🧭</span>
-          <span class="lucky-label">幸运方位</span>
-          <span class="lucky-value">{{ fortune.lucky_direction }}</span>
+      <div class="tips-section">
+        <div class="tips-row">
+          <div class="tips-card good">
+            <div class="tips-header">
+              <span class="tips-icon">✓</span>
+              <span class="tips-title">宜</span>
+            </div>
+            <div class="tips-list">
+              <span class="tip-item" v-for="item in fortune.do_list" :key="item">{{ item }}</span>
+            </div>
+            <div class="card-corner"></div>
+          </div>
+          <div class="tips-card bad">
+            <div class="tips-header">
+              <span class="tips-icon">✕</span>
+              <span class="tips-title">忌</span>
+            </div>
+            <div class="tips-list">
+              <span class="tip-item" v-for="item in fortune.avoid_list" :key="item">{{ item }}</span>
+            </div>
+            <div class="card-corner"></div>
+          </div>
         </div>
       </div>
 
-      <div class="checkin-section">
-        <div class="checkin-header">
-          <span class="checkin-title">每日签到</span>
-          <div class="checkin-stats">
-            <span class="stat-item">连续 {{ checkinStatus.checkin_days }} 天</span>
-            <span class="stat-item">累计 {{ checkinStatus.checkin_total }} 天</span>
+      <div class="detail-section">
+        <h3 class="section-title">
+          <span class="title-icon">📖</span>
+          命理详解
+        </h3>
+        <div class="detail-card">
+          <div class="detail-item" v-for="(item, index) in detailItems" :key="index">
+            <span class="detail-label">{{ item.label }}</span>
+            <span v-if="item.type === 'color'" class="detail-value">
+              <span class="color-box" :style="{ background: item.value }"></span>
+              <span class="detail-text">{{ item.text }}</span>
+            </span>
+            <span v-else class="detail-value">{{ item.value }}</span>
           </div>
         </div>
-        <button 
-          class="checkin-btn" 
-          :class="{ disabled: checkinStatus.has_checkin_today }"
-          :disabled="checkinStatus.has_checkin_today"
-          @click="doCheckin"
-        >
-          {{ checkinStatus.has_checkin_today ? '今日已签到' : '立即签到' }}
+      </div>
+
+      <div class="analysis-section">
+        <h3 class="section-title">
+          <span class="title-icon">☯</span>
+          今日运势
+        </h3>
+        <div class="analysis-card">
+          <div class="card-decoration"></div>
+          <p class="analysis-text">{{ fortune.phrase }}</p>
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <button class="refresh-btn" @click="loadFortune">
+          <span class="refresh-icon">🔄</span>
+          <span>重新测算</span>
         </button>
-        <div v-if="checkinReward" class="reward-tip">{{ checkinReward }}</div>
       </div>
-
-      <button class="share-btn" @click="share">分享今日运势</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated, computed } from 'vue'
 import { request } from '@/utils/request'
 
+const starField = ref(null)
 const loading = ref(true)
-const todayDate = ref('')
-const dayGanzhi = ref('')
 const fortune = ref({
-  overall_score: 0,
-  love_score: 0,
-  career_score: 0,
-  wealth_score: 0,
-  health_score: 0,
-  lucky_color: '',
-  lucky_number: '',
-  lucky_direction: '',
-  do_list: [],
-  avoid_list: [],
-  phrase: '',
-  chart_name: ''
+  overall_score: 78,
+  love_score: 85,
+  career_score: 72,
+  wealth_score: 70,
+  health_score: 82,
+  lucky_color: '#d4af37',
+  lucky_number: '8',
+  lucky_direction: '东方',
+  do_list: ['出行游玩', '约会社交', '学习提升'],
+  avoid_list: ['冲动消费', '与人争执'],
+  phrase: '今日命理运势平稳上升，贵人相助。适合开展新计划和社交活动，情感方面会有意外惊喜。'
 })
-const checkinStatus = ref({
-  has_checkin_today: false,
-  checkin_days: 0,
-  checkin_total: 0
-})
-const checkinReward = ref('')
 
-function formatTodayDate() {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth() + 1
-  const day = today.getDate()
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-  const weekday = weekdays[today.getDay()]
-  todayDate.value = `${year}年${month}月${day}日 星期${weekday}`
+const todayDay = computed(() => new Date().getDate())
+const todayMonth = computed(() => `${new Date().getMonth() + 1}月`)
+const todayWeek = computed(() => {
+  const weeks = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return weeks[new Date().getDay()]
+})
+
+const dayGanzhi = ref('')
+
+const dimensions = computed(() => [
+  { name: '爱情', value: fortune.value.love_score, icon: '❤️', color: 'love' },
+  { name: '事业', value: fortune.value.career_score, icon: '💼', color: 'career' },
+  { name: '财运', value: fortune.value.wealth_score, icon: '💰', color: 'wealth' },
+  { name: '健康', value: fortune.value.health_score, icon: '💪', color: 'health' }
+])
+
+const detailItems = computed(() => [
+  { label: '幸运色', type: 'color', value: getColorHex(fortune.value.lucky_color), text: fortune.value.lucky_color },
+  { label: '幸运数字', type: 'text', value: fortune.value.lucky_number },
+  { label: '幸运方位', type: 'text', value: fortune.value.lucky_direction }
+])
+
+function getColorHex(name) {
+  const map = {
+    '白色': '#ffffff', '银色': '#c0c0c0', '金色': '#d4af37',
+    '绿色': '#50c878', '青色': '#00cccc', '翠色': '#3eb370',
+    '蓝色': '#4a90d9', '黑色': '#333333', '灰色': '#888888',
+    '红色': '#e06060', '橙色': '#ff8c00', '粉色': '#ff90a0',
+    '黄色': '#fbbf24', '棕色': '#8b4513', '咖啡色': '#6f4e37'
+  }
+  return map[name] || '#d4af37'
 }
 
 async function loadFortune() {
+  loading.value = true
   try {
     const res = await request.get('/fortune/today')
     fortune.value = res
-    dayGanzhi.value = res.day_ganzhi || ''
+    // 设置干支日历
+    if (res.year_ganzhi && res.month_ganzhi && res.day_ganzhi) {
+      dayGanzhi.value = `${res.year_ganzhi} · ${res.month_ganzhi} · ${res.day_ganzhi}`
+    }
   } catch (e) {
-    console.error('加载运势失败', e)
+    console.error('获取运势失败', e)
   } finally {
     loading.value = false
   }
 }
 
-async function loadCheckinStatus() {
-  try {
-    const res = await request.get('/fortune/checkin/status')
-    checkinStatus.value = res
-  } catch (e) {
-    console.error('加载签到状态失败', e)
-  }
+function getScoreLevel(score) {
+  if (score >= 90) return '大吉'
+  if (score >= 80) return '吉'
+  if (score >= 70) return '中吉'
+  if (score >= 60) return '平'
+  return '小凶'
 }
 
-async function doCheckin() {
-  if (checkinStatus.value.has_checkin_today) return
-  try {
-    const res = await request.post('/fortune/checkin')
-    if (res.success) {
-      checkinStatus.value = {
-        has_checkin_today: true,
-        checkin_days: res.checkin_days,
-        checkin_total: res.checkin_total
-      }
-      checkinReward.value = res.reward || ''
-      alert('签到成功')
-    } else {
-      alert(res.message || '已签到')
-    }
-  } catch (e) {
-    console.error('签到失败', e)
-    alert('签到失败')
-  }
-}
-
-function share() {
-  if (navigator.share) {
-    navigator.share({
-      title: `今日运势 ${fortune.value.overall_score}分 - ${fortune.value.phrase}`,
-      text: `今日运势 ${fortune.value.overall_score}分`,
-      url: window.location.href
-    })
-  } else {
-    alert('请复制链接分享')
+function initStars() {
+  if (!starField.value) return
+  const container = starField.value
+  const starCount = 50
+  
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement('div')
+    star.className = 'star'
+    star.style.left = Math.random() * 100 + '%'
+    star.style.top = Math.random() * 100 + '%'
+    star.style.width = Math.random() * 2 + 1 + 'px'
+    star.style.height = star.style.width
+    star.style.opacity = Math.random() * 0.5 + 0.2
+    star.style.animationDelay = Math.random() * 3 + 's'
+    container.appendChild(star)
   }
 }
 
 onMounted(() => {
-  formatTodayDate()
+  initStars()
   loadFortune()
-  loadCheckinStatus()
+})
+
+onActivated(() => {
+  loadFortune()
 })
 </script>
 
 <style scoped>
-.fortune-page {
-  padding: 32rpx;
+.star-field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
 }
 
 .date-section {
-  text-align: center;
-  margin-bottom: 40rpx;
+  padding: 32px 24px;
 }
 
-.date-text {
-  display: block;
-  font-size: 28rpx;
-  color: #8888a0;
+.date-card {
+  background: rgba(18, 18, 35, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.date-glow {
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle at 70% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.date-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.date-day {
+  font-family: 'Cinzel', serif;
+  font-size: 52px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.date-month {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.date-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .ganzhi-text {
-  display: block;
-  font-size: 24rpx;
-  color: #666680;
-  margin-top: 8rpx;
+  font-size: 16px;
+  color: var(--gold-primary);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.week-text {
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 .loading-section {
   text-align: center;
-  padding: 80rpx 0;
-  color: #8888a0;
+  padding: 80px 0;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+}
+
+.spinner-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 3px solid rgba(212, 175, 55, 0.1);
+  border-top-color: var(--gold-primary);
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
+}
+
+.spinner-ring-second {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 2px solid rgba(139, 92, 246, 0.1);
+  border-bottom-color: var(--purple-primary);
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite reverse;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-8px); }
+}
+
+.loading-text {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.fortune-content {
+  padding: 0 24px;
 }
 
 .overall-section {
   text-align: center;
-  margin-bottom: 40rpx;
+  padding: 40px 0;
 }
 
 .score-circle {
-  width: 240rpx;
-  height: 240rpx;
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+.circle-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.circle-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  border: 8rpx solid #c9a050;
+  background: conic-gradient(
+    var(--gold-primary) calc(var(--progress) * 360deg),
+    rgba(212, 175, 55, 0.1) calc(var(--progress) * 360deg)
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #fff calc(100% - 14px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #fff calc(100% - 14px));
+}
+
+.circle-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
+  background: rgba(10, 10, 21, 0.95);
+  border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24rpx;
-  background: radial-gradient(circle, rgba(201, 160, 80, 0.1) 0%, transparent 70%);
+  border: 1px solid rgba(212, 175, 55, 0.1);
 }
 
 .score-number {
-  font-size: 80rpx;
+  font-family: 'Cinzel', serif;
+  font-size: 60px;
   font-weight: 700;
-  color: #c9a050;
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .score-label {
-  font-size: 24rpx;
-  color: #8888a0;
-  margin-top: 8rpx;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 
-.phrase {
-  display: block;
-  font-size: 30rpx;
-  color: #e0e0f0;
-  margin-bottom: 12rpx;
-  line-height: 1.6;
+.score-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.chart-info-text {
-  font-size: 24rpx;
-  color: #666680;
+.score-glow-secondary {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: pulse-glow 3s ease-in-out infinite reverse;
 }
 
-.dimension-section {
-  margin-bottom: 32rpx;
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
 }
 
-.dimension-item {
+.score-tags {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.score-tag {
+  font-size: 14px;
+  padding: 6px 20px;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold-primary);
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.score-tag.secondary {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--purple-secondary);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dimensions-section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  margin-bottom: 20rpx;
+  gap: 8px;
 }
 
-.dimension-icon {
-  font-size: 36rpx;
-  width: 48rpx;
+.title-icon {
+  color: var(--gold-primary);
 }
 
-.dimension-label {
-  font-size: 26rpx;
-  color: #e0e0f0;
-  width: 80rpx;
+.dimensions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.score-bar {
-  flex: 1;
-  height: 16rpx;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8rpx;
+.dimension-card {
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
   overflow: hidden;
 }
 
-.score-fill {
-  height: 100%;
-  border-radius: 8rpx;
-  transition: width 0.5s ease;
+.dim-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.score-fill.love { background: linear-gradient(90deg, #ff6b9d, #ff8e9e); }
-.score-fill.career { background: linear-gradient(90deg, #4facfe, #00f2fe); }
-.score-fill.wealth { background: linear-gradient(90deg, #ffd700, #ffb347); }
-.score-fill.health { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+.dim-icon {
+  font-size: 22px;
+}
 
-.dimension-score {
-  font-size: 28rpx;
+.dim-name {
+  font-size: 16px;
   font-weight: 600;
-  color: #c9a050;
-  width: 60rpx;
+  color: var(--text-primary);
+}
+
+.dim-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dim-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.dim-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.dim-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+  border-radius: 4px 4px 0 0;
+}
+
+.dim-bar-fill.love { background: linear-gradient(90deg, #e06060, #ff8080); }
+.dim-bar-fill.career { background: linear-gradient(90deg, #6090c8, #80b0e0); }
+.dim-bar-fill.wealth { background: linear-gradient(90deg, var(--gold-primary), var(--gold-secondary)); }
+.dim-bar-fill.health { background: linear-gradient(90deg, #50c878, #80e098); }
+
+.dim-value {
+  font-size: 14px;
+  color: var(--gold-primary);
+  font-weight: 600;
+  width: 48px;
   text-align: right;
 }
 
-.yiji-section {
+.dim-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dimension-card:hover .dim-glow {
+  opacity: 0.5;
+}
+
+.dim-glow.love { background: linear-gradient(90deg, #e06060, #ff8080); }
+.dim-glow.career { background: linear-gradient(90deg, #6090c8, #80b0e0); }
+.dim-glow.wealth { background: linear-gradient(90deg, var(--gold-primary), var(--gold-secondary)); }
+.dim-glow.health { background: linear-gradient(90deg, #50c878, #80e098); }
+
+.tips-section {
+  margin-bottom: 32px;
+}
+
+.tips-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.tips-card {
+  background: rgba(18, 18, 35, 0.6);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tips-card.good {
+  border: 1px solid rgba(80, 200, 120, 0.15);
+}
+
+.tips-card.bad {
+  border: 1px solid rgba(224, 96, 96, 0.15);
+}
+
+.card-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  border-right: 2px solid rgba(212, 175, 55, 0.1);
+  border-top: 2px solid rgba(212, 175, 55, 0.1);
+  border-radius: 0 16px 0 0;
+}
+
+.tips-header {
   display: flex;
-  gap: 20rpx;
-  margin-bottom: 32rpx;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
-.yi-box, .ji-box {
-  flex: 1;
-  background: rgba(20, 20, 45, 0.8);
-  border-radius: 20rpx;
-  padding: 24rpx;
+.tips-card.good .tips-icon {
+  color: #50c878;
 }
 
-.yiji-title {
-  display: block;
-  font-size: 28rpx;
+.tips-card.bad .tips-icon {
+  color: #e06060;
+}
+
+.tips-icon {
+  font-size: 18px;
+}
+
+.tips-title {
+  font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16rpx;
-  text-align: center;
+  color: var(--text-primary);
 }
 
-.yi-box .yiji-title { color: #4caf50; }
-.ji-box .yiji-title { color: #f44336; }
-
-.yiji-list {
+.tips-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  justify-content: center;
+  gap: 8px;
 }
 
-.yi-item, .ji-item {
-  font-size: 24rpx;
-  padding: 8rpx 16rpx;
-  border-radius: 20rpx;
+.tip-item {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 12px;
 }
 
-.yi-item {
-  background: rgba(76, 175, 80, 0.15);
-  color: #4caf50;
+.tips-card.good .tip-item {
+  background: rgba(80, 200, 120, 0.08);
+  color: #80e098;
 }
 
-.ji-item {
-  background: rgba(244, 67, 54, 0.15);
-  color: #f44336;
+.tips-card.bad .tip-item {
+  background: rgba(224, 96, 96, 0.08);
+  color: #ff8080;
 }
 
-.lucky-section {
+.detail-section {
+  margin-bottom: 32px;
+}
+
+.detail-card {
+  background: rgba(18, 18, 35, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+  padding: 8px 0;
+}
+
+.detail-item {
   display: flex;
-  gap: 20rpx;
-  margin-bottom: 32rpx;
-}
-
-.lucky-item {
-  flex: 1;
-  background: rgba(20, 20, 45, 0.8);
-  border-radius: 20rpx;
-  padding: 24rpx;
-  text-align: center;
-}
-
-.lucky-icon {
-  font-size: 36rpx;
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.lucky-label {
-  font-size: 22rpx;
-  color: #8888a0;
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.lucky-value {
-  font-size: 26rpx;
-  color: #c9a050;
-  font-weight: 600;
-}
-
-.checkin-section {
-  background: rgba(20, 20, 45, 0.8);
-  border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-}
-
-.checkin-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  padding: 16px 20px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.06);
 }
 
-.checkin-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #e0e0f0;
+.detail-item:last-child {
+  border-bottom: none;
 }
 
-.checkin-stats {
+.detail-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  width: 72px;
+}
+
+.detail-value {
+  font-size: 16px;
+  color: var(--gold-primary);
+  font-weight: 500;
   display: flex;
-  gap: 20rpx;
+  align-items: center;
+  gap: 8px;
 }
 
-.stat-item {
-  font-size: 24rpx;
-  color: #8888a0;
+.color-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.checkin-btn {
-  width: 100%;
-  padding: 24rpx;
-  border: none;
-  border-radius: 50rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  cursor: pointer;
+.detail-text {
+  font-size: 16px;
+  color: var(--text-primary);
 }
 
-.checkin-btn:not(.disabled) {
-  background: linear-gradient(135deg, #c9a050 0%, #e0b868 100%);
-  color: #1a1a2e;
+.analysis-section {
+  margin-bottom: 40px;
 }
 
-.checkin-btn.disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: #666680;
+.analysis-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.04) 50%, rgba(212, 175, 55, 0.04) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
 }
 
-.reward-tip {
-  margin-top: 16rpx;
+.card-decoration {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  border-left: 2px solid rgba(212, 175, 55, 0.3);
+  border-top: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.card-decoration::after {
+  content: '';
+  position: absolute;
+  bottom: -26px;
+  right: -26px;
+  width: 24px;
+  height: 24px;
+  border-right: 2px solid rgba(212, 175, 55, 0.3);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.analysis-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin: 0;
+  text-indent: 2em;
+}
+
+.footer-section {
   text-align: center;
-  font-size: 24rpx;
-  color: #c9a050;
+  padding-bottom: 40px;
 }
 
-.share-btn {
-  width: 100%;
-  padding: 24rpx;
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   background: transparent;
-  border: 1rpx solid rgba(201, 160, 80, 0.5);
-  color: #c9a050;
-  border-radius: 50rpx;
-  font-size: 28rpx;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--gold-primary);
+  border-radius: 24px;
+  padding: 14px 32px;
+  font-size: 15px;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.refresh-icon {
+  font-size: 18px;
 }
 </style>

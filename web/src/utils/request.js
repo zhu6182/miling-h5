@@ -24,11 +24,10 @@ instance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const authStore = useAuthStore()
-      authStore.logout()
-      window.location.href = '/profile'
+      if (authStore.token) {
+        authStore.logout()
+      }
     }
-    const message = error.response?.data?.detail || '请求失败'
-    alert(message)
     return Promise.reject(error)
   }
 )

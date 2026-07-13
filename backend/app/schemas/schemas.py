@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class UserBase(BaseModel):
+    username: Optional[str] = None
     phone: Optional[str] = None
     nickname: Optional[str] = None
     avatar: Optional[str] = None
@@ -15,12 +16,12 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    phone: str
+    username: str
     password: str
 
 
 class UserLogin(BaseModel):
-    phone: str
+    username: str
     password: str
 
 

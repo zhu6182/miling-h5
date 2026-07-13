@@ -40,7 +40,7 @@ def calculate_bazi(
 
     ec = lunar.getEightChar()
 
-    gender_cn = '男' if gender == 'male' else '女'
+    gender_cn = '男' if gender in ['male', '男'] else '女'
 
     # 藏干
     hidden_stems = {

@@ -1,202 +1,227 @@
 <template>
-  <div class="index-page">
-    <div class="header">
-      <div class="title">
-        <span class="main-title">星运日记</span>
-        <span class="sub-title">· 每日星座运势 ·</span>
+  <div class="page-container">
+    <div class="header-section">
+      <div class="logo-ring">
+        <div class="logo-core">
+          <span class="logo-symbol">☽</span>
+        </div>
+        <div class="ring-orbit"></div>
+        <div class="ring-orbit-second"></div>
       </div>
-      <div class="slogan">星辰指引，遇见更好的自己</div>
+      <h1 class="main-title">命里</h1>
+      <p class="sub-title">· 命理玄机 ·</p>
+      <p class="slogan">探索八字命运的奥秘</p>
     </div>
 
-    <div v-if="!isLoggedIn" class="welcome-card">
-      <div class="welcome-title">欢迎来到星运日记</div>
-      <div class="welcome-desc">输入你的生辰，探索专属星座运势</div>
-      <button class="btn-primary" @click="$router.push('/profile')">立即登录 / 注册</button>
+    <div class="tabs-container">
+      <button class="tab-btn" :class="{ active: activeTab === 'self' }" @click="activeTab = 'self'">
+        <span class="tab-text">我的命盘</span>
+      </button>
+      <button class="tab-btn" :class="{ active: activeTab === 'help' }" @click="activeTab = 'help'">
+        <span class="tab-text">帮TA测算</span>
+      </button>
     </div>
 
-    <div v-else class="container">
-      <div class="tab-bar-page">
-        <div 
-          class="tab-item-page" 
-          :class="{ active: activeTab === 'my' }"
-          @click="activeTab = 'my'"
-        >我的星盘</div>
-        <div 
-          class="tab-item-page" 
-          :class="{ active: activeTab === 'helped' }"
-          @click="activeTab = 'helped'"
-        >帮亲友查</div>
+    <div class="main-content">
+      <div v-if="!isLoggedIn" class="welcome-card">
+        <div class="card-illustration">
+          <span class="illustration-icon">🔮</span>
+        </div>
+        <h3 class="card-title">欢迎来到命里</h3>
+        <p class="card-desc">输入你的生辰，探索专属命理玄机</p>
+        <button class="btn-primary" @click="goLogin">
+          <span class="btn-text">开启命理之旅</span>
+          <span class="btn-arrow">→</span>
+        </button>
       </div>
 
-      <div v-if="activeTab === 'my'">
-        <div v-if="!hasChart" class="no-chart-card">
-          <div class="no-chart-icon">✨</div>
-          <div class="no-chart-title">还没有你的星盘</div>
-          <div class="no-chart-desc">输入生辰信息，生成你的专属星盘</div>
-          <button class="btn-primary" @click="$router.push('/birth-input')">生成星盘</button>
+      <div v-if="isLoggedIn && charts.length > 0" class="charts-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="title-icon">☯</span>
+            我的命盘
+          </h2>
+          <button class="add-chart-btn" @click="goAddChart">
+            <span>+ 添加</span>
+          </button>
         </div>
-
-        <div v-else>
-          <div class="chart-overview" @click="goDetail(defaultChart.id)">
-            <div class="chart-header">
-              <span class="chart-name">{{ defaultChart.name }}</span>
-              <span class="chart-badge">默认星盘</span>
-            </div>
-            <div class="chart-info">
-              <div class="info-item">
-                <span class="info-label">守护星</span>
-                <span class="info-value text-gold">{{ defaultChart.soul_palace }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">星座元素</span>
-                <span class="info-value">{{ defaultChart.five_elements }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">生辰</span>
-                <span class="info-value">{{ defaultChart.solar_date }} {{ defaultChart.hour_name }}</span>
-              </div>
-            </div>
-            <div class="chart-action">
-              <span>查看完整星盘解读</span>
-              <span class="arrow">→</span>
-            </div>
+        <div class="current-chart-card" v-if="defaultChart" @click="goChartDetail(defaultChart.id)">
+          <div class="current-chart-icon">
+            <span class="icon-symbol">{{ getChartIcon(defaultChart.chart_type) }}</span>
           </div>
-
-          <div class="quick-actions">
-            <div class="action-item" @click="$router.push('/fortune')">
-              <span class="action-icon">🌟</span>
-              <span class="action-text">今日运势</span>
-            </div>
-            <div class="action-item" @click="$router.push('/birth-input')">
-              <span class="action-icon">✨</span>
-              <span class="action-text">星盘解析</span>
-            </div>
-            <div class="action-item" @click="goBaziInput">
-              <span class="action-icon">🔮</span>
-              <span class="action-text">性格测试</span>
-            </div>
-            <div class="action-item" @click="goLifeKline">
-              <span class="action-icon">📈</span>
-              <span class="action-text">运势曲线</span>
-            </div>
+          <div class="current-chart-info">
+            <h3 class="current-chart-name">{{ defaultChart.name }}</h3>
+            <p class="current-chart-date">{{ defaultChart.solar_date }} · {{ defaultChart.hour_name }} · {{ defaultChart.gender }}</p>
           </div>
-
-          <div class="list-title">我的星盘</div>
-          <div 
-            v-for="chart in myCharts" 
-            :key="chart.id"
-            class="chart-card"
-            @click="goDetail(chart.id)"
-          >
-            <div class="chart-card-left">
-              <span class="chart-card-name">{{ chart.name }}</span>
-              <div class="chart-card-meta">
-                <span class="chart-card-tag">{{ chart.soul_palace }}</span>
-                <span class="chart-card-desc">{{ chart.solar_date }}</span>
+          <span class="current-chart-arrow">→</span>
+        </div>
+        <div class="charts-grid" v-if="charts.length > 1">
+          <div class="chart-card" v-for="chart in charts" :key="chart.id" @click="goChartDetail(chart.id)">
+            <div class="card-header">
+              <div class="chart-icon">
+                <span class="icon-symbol">{{ getChartIcon(chart.chart_type) }}</span>
+              </div>
+              <div class="chart-info">
+                <h4 class="chart-name">{{ chart.name }}</h4>
+                <p class="chart-date">{{ chart.solar_date }} · {{ chart.hour_name }}</p>
               </div>
             </div>
-            <div class="chart-card-right">→</div>
+            <div class="chart-tags">
+              <span class="tag" :class="getTagClass(chart.chart_type)">{{ getChartTypeName(chart.chart_type) }}</span>
+              <span v-if="chart.is_default" class="tag default-tag">默认</span>
+            </div>
+            <div class="card-footer">
+              <span class="footer-text">查看详情</span>
+              <span class="footer-arrow">→</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-if="activeTab === 'helped'">
-        <div v-if="helpedCharts.length === 0" class="no-chart-card">
-          <div class="no-chart-icon">👥</div>
-          <div class="no-chart-title">还没有帮亲友生成的星盘</div>
-          <div class="no-chart-desc">帮亲友分析星盘，一键查看运势</div>
-          <button class="btn-primary" @click="$router.push('/birth-input')">去生成</button>
+      <div class="features-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="title-icon">☯</span>
+            核心功能
+          </h2>
         </div>
-        <div v-else>
-          <div 
-            v-for="chart in helpedCharts" 
-            :key="chart.id"
-            class="chart-card"
-            @click="goDetail(chart.id)"
-          >
-            <div class="chart-card-left">
-              <span class="chart-card-name">{{ chart.name }}</span>
-              <div class="chart-card-meta">
-                <span class="chart-card-tag">{{ chart.soul_palace }}</span>
-                <span class="chart-card-desc">{{ chart.solar_date }}</span>
-              </div>
-            </div>
-            <div class="chart-card-right">→</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="feature-section">
-        <div class="section-title">核心功能</div>
-        <div class="feature-grid">
-          <div class="feature-item">
+        <div class="features-grid">
+          <button class="feature-card" @click="goFortune">
+            <span class="feature-icon">📅</span>
+            <h3 class="feature-title">今日运势</h3>
+            <p class="feature-desc">每日命理指引</p>
+          </button>
+          <button class="feature-card" @click="goBaziDetail">
+            <span class="feature-icon">📜</span>
+            <h3 class="feature-title">八字排盘</h3>
+            <p class="feature-desc">四柱命理推算</p>
+          </button>
+          <button class="feature-card" @click="goChartInput">
             <span class="feature-icon">🔮</span>
-            <span class="feature-name">星盘解析</span>
-            <span class="feature-desc">精准分析星座宫位分布</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">🌟</span>
-            <span class="feature-name">星座运势</span>
-            <span class="feature-desc">每日星座运势精准预测</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">🤖</span>
-            <span class="feature-name">AI解读</span>
-            <span class="feature-desc">智能星座性格分析</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">👥</span>
-            <span class="feature-name">缘分匹配</span>
-            <span class="feature-desc">星座配对指数分析</span>
-          </div>
-          <div class="feature-item">
+            <h3 class="feature-title">紫微命盘</h3>
+            <p class="feature-desc">十二宫精准解析</p>
+          </button>
+          <button class="feature-card" @click="goLifeKline">
             <span class="feature-icon">📈</span>
-            <span class="feature-name">运势曲线</span>
-            <span class="feature-desc">长期运势趋势分析</span>
+            <h3 class="feature-title">人生K线</h3>
+            <p class="feature-desc">命运起伏曲线</p>
+          </button>
+        </div>
+      </div>
+
+      <div class="daily-card">
+        <div class="card-left">
+          <span class="daily-icon">☯</span>
+          <div class="daily-content">
+            <h4 class="daily-title">今日宜忌</h4>
+            <p class="daily-text">{{ todayFortune }}</p>
           </div>
         </div>
+        <button class="daily-btn" @click="goFortune">
+          <span>查看</span>
+          <span class="btn-arrow">→</span>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { request } from '@/utils/request'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const activeTab = ref('my')
-const myCharts = ref([])
-const helpedCharts = ref([])
+const activeTab = ref('self')
+const charts = ref([])
+const todayFortune = ref('加载中...')
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
-const hasChart = computed(() => myCharts.value.length > 0)
+
 const defaultChart = computed(() => {
-  return myCharts.value.find(c => c.is_default) || myCharts.value[0] || null
+  return charts.value.find(c => c.is_default) || charts.value[0] || null
 })
 
-async function loadCharts(type) {
+async function loadTodayFortune() {
+  if (!authStore.isLoggedIn) {
+    todayFortune.value = '宜出行、求财、动土'
+    return
+  }
   try {
-    const res = await request.get(`/users/me/charts?type=${type}`)
-    if (type === 'my') {
-      myCharts.value = res || []
+    const res = await request.get('/fortune/today')
+    if (res && res.do_list && res.do_list.length) {
+      todayFortune.value = '宜 ' + res.do_list.slice(0, 3).join('、')
     } else {
-      helpedCharts.value = res || []
+      todayFortune.value = '今日诸事皆宜'
     }
   } catch (e) {
-    console.error('加载星盘失败', e)
+    todayFortune.value = '宜出行、求财、动土'
   }
 }
 
-function goDetail(id) {
+async function checkLogin() {
+  if (authStore.token) {
+    try {
+      const res = await request.get('/users/me')
+      authStore.setUser(res)
+      loadCharts()
+      loadTodayFortune()
+    } catch (e) {
+      if (e.response?.status === 401) {
+        authStore.logout()
+      }
+    }
+  }
+}
+
+async function loadCharts() {
+  try {
+    const res = await request.get('/charts')
+    charts.value = res || []
+  } catch (e) {
+    console.error('加载命盘失败', e)
+  }
+}
+
+function goLogin() {
+  router.push('/profile')
+}
+
+function goAddChart() {
+  router.push('/chart-input')
+}
+
+function goChartDetail(id) {
   router.push(`/chart-detail/${id}`)
 }
 
-function goBaziInput() {
+function goFortune() {
+  if (defaultChart.value) {
+    router.push({
+      path: '/fortune',
+      query: {
+        date_str: defaultChart.value.solar_date,
+        hour_index: defaultChart.value.hour_index,
+        gender: defaultChart.value.gender
+      }
+    })
+  } else {
+    router.push('/chart-input')
+  }
+}
+
+function goChartInput() {
+  if (defaultChart.value) {
+    router.push(`/chart-detail/${defaultChart.value.id}`)
+  } else {
+    router.push('/chart-input')
+  }
+}
+
+function goBaziDetail() {
   if (defaultChart.value) {
     router.push({
       path: '/bazi-detail',
@@ -222,299 +247,531 @@ function goLifeKline() {
       }
     })
   } else {
-    router.push('/birth-input')
+    router.push('/chart-input')
   }
 }
 
+function getChartIcon(type) {
+  return type === 'bazi' ? '📜' : '🔮'
+}
+
+function getChartTypeName(type) {
+  return type === 'bazi' ? '八字四柱' : '紫微斗数'
+}
+
+function getTagClass(type) {
+  return type === 'bazi' ? 'bazi-tag' : 'ziwei-tag'
+}
+
+const hasLoaded = ref(false)
+
 onMounted(() => {
-  if (isLoggedIn.value) {
-    loadCharts('my')
-    loadCharts('helped')
+  if (!hasLoaded.value) {
+    checkLogin()
+    hasLoaded.value = true
+  }
+})
+
+onActivated(() => {
+  if (authStore.isLoggedIn) {
+    if (charts.value.length === 0) {
+      loadCharts()
+    }
+    loadTodayFortune()
   }
 })
 </script>
 
 <style scoped>
-.index-page {
-  min-height: 100%;
+.header-section {
+  text-align: center;
+  padding: 40px 20px 20px;
 }
 
-.header {
-  text-align: center;
-  padding: 60rpx 0 40rpx;
+.logo-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+}
+
+.logo-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, rgba(139, 92, 246, 0.2) 50%, transparent 70%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.5), 0 0 50px rgba(139, 92, 246, 0.2); }
+}
+
+.logo-symbol {
+  font-size: 24px;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.ring-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 50%;
+  animation: rotate 25s linear infinite;
+}
+
+.ring-orbit-second {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 50%;
+  animation: rotate 15s linear infinite reverse;
+}
+
+@keyframes rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .main-title {
-  font-size: 64rpx;
+  font-family: 'Cinzel', serif;
+  font-size: 42px;
   font-weight: 700;
-  color: #c9a050;
-  letter-spacing: 12rpx;
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 40%, var(--purple-secondary) 60%, var(--gold-primary) 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 6px;
+  letter-spacing: 6px;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .sub-title {
-  font-size: 24rpx;
-  color: #8888a0;
-  margin-left: 16rpx;
-  letter-spacing: 4rpx;
+  font-size: 13px;
+  color: rgba(167, 139, 250, 0.7);
+  margin-bottom: 6px;
+  letter-spacing: 6px;
 }
 
 .slogan {
-  font-size: 26rpx;
-  color: #666680;
-  margin-top: 16rpx;
-  letter-spacing: 4rpx;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+  font-style: italic;
+}
+
+.tabs-container {
+  display: flex;
+  margin: 0 20px 20px;
+  background: rgba(10, 10, 25, 0.6);
+  border-radius: 16px;
+  padding: 4px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: rgba(150, 150, 180, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+  color: var(--gold-primary);
+}
+
+.main-content {
+  padding: 0 20px;
 }
 
 .welcome-card {
+  background: rgba(10, 10, 25, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 20px;
+  padding: 30px 24px;
   text-align: center;
-  padding: 60rpx 32rpx;
+  margin-bottom: 24px;
 }
 
-.welcome-title {
-  font-size: 36rpx;
+.card-illustration {
+  margin-bottom: 14px;
+}
+
+.illustration-icon {
+  font-size: 56px;
+  animation: float 5s ease-in-out infinite;
+}
+
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
   font-weight: 600;
-  color: #e0e0f0;
-  margin-bottom: 16rpx;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
-.welcome-desc {
-  font-size: 26rpx;
-  color: #8888a0;
-  margin-bottom: 40rpx;
+.card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
 }
 
-.tab-bar-page {
-  display: flex;
-  justify-content: center;
+.btn-primary {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 32rpx;
-  gap: 80rpx;
-}
-
-.tab-item-page {
-  position: relative;
-  font-size: 30rpx;
-  color: #8888a0;
-  padding: 16rpx 8rpx;
-  cursor: pointer;
-}
-
-.tab-item-page.active {
-  color: #c9a050;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
+  color: #0a0a15;
+  border: none;
+  border-radius: 24px;
+  padding: 13px 32px;
+  font-size: 15px;
   font-weight: 600;
-}
-
-.tab-item-page.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40rpx;
-  height: 4rpx;
-  background: #c9a050;
-  border-radius: 2rpx;
-}
-
-.no-chart-card {
-  text-align: center;
-  padding: 60rpx 32rpx;
-}
-
-.no-chart-icon {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
-}
-
-.no-chart-title {
-  font-size: 32rpx;
-  color: #e0e0f0;
-  margin-bottom: 12rpx;
-}
-
-.no-chart-desc {
-  font-size: 26rpx;
-  color: #8888a0;
-  margin-bottom: 40rpx;
-}
-
-.chart-overview {
-  background: linear-gradient(135deg, rgba(30, 30, 60, 0.9) 0%, rgba(20, 20, 45, 0.95) 100%);
-  border: 1rpx solid rgba(201, 160, 80, 0.3);
-  border-radius: 24rpx;
-  padding: 36rpx;
-  margin-bottom: 32rpx;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.chart-header {
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+}
+
+.btn-text {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 2px;
+}
+
+.btn-arrow {
+  font-size: 16px;
+}
+
+.current-chart-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.current-chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+}
+
+.current-chart-icon {
+  width: 52px;
+  height: 52px;
+  background: rgba(212, 175, 55, 0.15);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.current-chart-icon .icon-symbol {
+  font-size: 26px;
+}
+
+.current-chart-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.current-chart-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.current-chart-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.current-chart-arrow {
+  font-size: 18px;
+  color: var(--gold-primary);
+  flex-shrink: 0;
+}
+
+.charts-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 12px;
 }
 
-.chart-name {
-  font-size: 34rpx;
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 17px;
   font-weight: 600;
-  color: #e0e0f0;
-}
-
-.chart-badge {
-  font-size: 22rpx;
-  color: #c9a050;
-  background: rgba(201, 160, 80, 0.15);
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-}
-
-.chart-info {
+  color: var(--text-primary);
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-bottom: 24rpx;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
 }
 
-.info-label {
-  font-size: 26rpx;
-  color: #8888a0;
+.title-icon {
+  color: var(--gold-primary);
+  font-size: 14px;
 }
 
-.info-value {
-  font-size: 26rpx;
-  color: #e0e0f0;
-}
-
-.chart-action {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid rgba(201, 160, 80, 0.15);
-  color: #c9a050;
-  font-size: 28rpx;
-}
-
-.arrow {
-  font-size: 28rpx;
-}
-
-.quick-actions {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 40rpx;
-}
-
-.action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12rpx;
+.add-chart-btn {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: var(--gold-primary);
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 13px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.action-icon {
-  font-size: 44rpx;
+.add-chart-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
 }
 
-.action-text {
-  font-size: 24rpx;
-  color: #8888a0;
-}
-
-.list-title {
-  font-size: 28rpx;
-  color: #8888a0;
-  margin-bottom: 20rpx;
+.charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .chart-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(30, 30, 60, 0.9);
-  border: 1rpx solid rgba(201, 160, 80, 0.2);
-  border-radius: 16rpx;
-  padding: 28rpx 32rpx;
-  margin-bottom: 20rpx;
+  background: rgba(10, 10, 25, 0.4);
+  border: 1px solid rgba(139, 92, 246, 0.08);
+  border-radius: 16px;
+  padding: 16px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.chart-card-left {
+.chart-card:hover {
+  border-color: rgba(212, 175, 55, 0.25);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.chart-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-symbol {
+  font-size: 22px;
+}
+
+.chart-info {
   flex: 1;
 }
 
-.chart-card-name {
-  font-size: 30rpx;
+.chart-name {
+  font-size: 15px;
   font-weight: 600;
-  color: #e0e0f0;
-  display: block;
-  margin-bottom: 8rpx;
+  color: var(--text-primary);
+  margin-bottom: 2px;
 }
 
-.chart-card-meta {
+.chart-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chart-tags {
   display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.06);
+  color: var(--gold-primary);
+}
+
+.default-tag {
+  background: rgba(139, 92, 246, 0.06);
+  color: var(--purple-secondary);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16rpx;
+  padding-top: 8px;
+  border-top: 1px solid rgba(139, 92, 246, 0.06);
 }
 
-.chart-card-tag {
-  font-size: 20rpx;
-  color: #c9a050;
-  background: rgba(201, 160, 80, 0.15);
-  padding: 4rpx 12rpx;
-  border-radius: 12rpx;
+.footer-text {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
-.chart-card-desc {
-  font-size: 24rpx;
-  color: #8888a0;
+.footer-arrow {
+  font-size: 14px;
+  color: var(--gold-primary);
 }
 
-.chart-card-right {
-  color: #c9a050;
+.features-section {
+  margin-bottom: 24px;
 }
 
-.feature-section {
-  margin-top: 20rpx;
-}
-
-.feature-grid {
+.features-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20rpx;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-.feature-item {
-  background: rgba(20, 20, 45, 0.6);
-  border: 1rpx solid rgba(201, 160, 80, 0.15);
-  border-radius: 16rpx;
-  padding: 30rpx;
+.feature-card {
+  background: rgba(10, 10, 25, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.06);
+  border-radius: 16px;
+  padding: 20px 12px;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  border-color: rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
 }
 
 .feature-icon {
-  font-size: 40rpx;
-  display: block;
-  margin-bottom: 8rpx;
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
-.feature-name {
-  font-size: 28rpx;
+.feature-title {
+  font-size: 14px;
   font-weight: 600;
-  color: #e0e0f0;
-  display: block;
-  margin-bottom: 4rpx;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .feature-desc {
-  font-size: 22rpx;
-  color: #8888a0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.daily-card {
+  background: rgba(10, 10, 25, 0.4);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.daily-icon {
+  font-size: 28px;
+  color: var(--gold-primary);
+}
+
+.daily-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.daily-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.daily-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.daily-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: var(--gold-primary);
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.daily-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
 }
 </style>

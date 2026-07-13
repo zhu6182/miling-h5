@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.core.security import create_access_token
 from app.core.config import settings
 from app.schemas.schemas import UserCreate, UserLogin, UserResponse, Token, WechatLoginRequest
-from app.services.user_service import create_user, authenticate_user, get_user_by_phone
+from app.services.user_service import create_user, authenticate_user, get_user_by_username
 from app.models.models import User
 
 router = APIRouter(prefix="/auth", tags=["认证"])
@@ -13,9 +13,9 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 
 @router.post("/register", response_model=Token)
 def register(user_create: UserCreate, db: Session = Depends(get_db)):
-    existing = get_user_by_phone(db, user_create.phone)
+    existing = get_user_by_username(db, user_create.username)
     if existing:
-        raise HTTPException(status_code=400, detail="该手机号已注册")
+        raise HTTPException(status_code=400, detail="该用户名已注册")
     user = create_user(db, user_create)
     access_token = create_access_token(data={"user_id": user.id})
     return {"access_token": access_token, "token_type": "bearer", "user": user}
@@ -23,9 +23,9 @@ def register(user_create: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(user_login: UserLogin, db: Session = Depends(get_db)):
-    user = authenticate_user(db, user_login.phone, user_login.password)
+    user = authenticate_user(db, user_login.username, user_login.password)
     if not user:
-        raise HTTPException(status_code=401, detail="手机号或密码错误")
+        raise HTTPException(status_code=401, detail="用户名或密码错误")
     access_token = create_access_token(data={"user_id": user.id})
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 

@@ -112,7 +112,18 @@ class MockAIProvider(AIProvider):
             },
         ]
 
+        # 拼接 body 文本，兼容前端旧版只读取 body 的展示方式
+        body_parts = []
+        for card in cards:
+            body_parts.append(f"## {card['title']}")
+            if card.get('badge'):
+                body_parts.append(f"主星：{card['badge']}")
+            body_parts.append(card['body'])
+            body_parts.append('')
+        body = '<br><br>'.join(body_parts)
+
         return {
+            "body": body,
             "current_decadal_branch": current_decadal_branch,
             "current_decadal_display": current_decadal_display,
             "cards": cards,
@@ -313,15 +324,19 @@ class VolcengineProvider(AIProvider):
 
 
 # 火山方舟默认配置（全局默认 AI 服务）
-DEFAULT_AI_PROVIDER = "openai"
+DEFAULT_AI_PROVIDER = "volcengine"
 DEFAULT_API_KEY = "ark-5fdd8a51-478e-49e8-aebb-46b8e03af7d8-2cd0f"
 DEFAULT_MODEL = "ark-code-latest"
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/coding/v3"
 
 
 def get_ai_provider(provider: str = None, **kwargs) -> AIProvider:
-    # 如果没指定 provider 或是 mock，使用默认火山方舟配置
-    if not provider or provider == "mock":
+    # 如果明确指定 mock，直接返回本地模拟 provider（快速、无需网络）
+    if provider == "mock":
+        return MockAIProvider()
+
+    # 如果没指定 provider，使用默认火山方舟配置
+    if not provider:
         provider = DEFAULT_AI_PROVIDER
 
     # 获取 API Key，如果用户没配就用默认的

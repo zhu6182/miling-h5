@@ -42,23 +42,27 @@ def get_my_charts(
 
 
 @router.post("/calculate-chart")
-def calculate_new_chart(
+def calculate_chart_api(
     req: ChartCalculateRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     try:
+        gender_map = {'male': '男', 'female': '女'}
+        gender_cn = gender_map.get(req.gender, req.gender)
+        
         if req.solar_date:
             chart_data = calculate_chart(
                 date_str=req.solar_date,
                 hour_index=req.hour_index,
-                gender=req.gender,
+                gender=gender_cn,
                 is_lunar=False
             )
         elif req.lunar_date:
             chart_data = calculate_chart(
                 date_str=req.lunar_date,
                 hour_index=req.hour_index,
-                gender=req.gender,
+                gender=gender_cn,
                 is_lunar=True,
                 is_leap=req.is_leap
             )
@@ -76,18 +80,21 @@ def save_chart(
     db: Session = Depends(get_db)
 ):
     try:
+        gender_map = {'male': '男', 'female': '女'}
+        gender_cn = gender_map.get(req.gender, req.gender)
+        
         if req.solar_date:
             chart_data = calculate_chart(
                 date_str=req.solar_date,
                 hour_index=req.hour_index,
-                gender=req.gender,
+                gender=gender_cn,
                 is_lunar=False
             )
         elif req.lunar_date:
             chart_data = calculate_chart(
                 date_str=req.lunar_date,
                 hour_index=req.hour_index,
-                gender=req.gender,
+                gender=gender_cn,
                 is_lunar=True,
                 is_leap=req.is_leap
             )

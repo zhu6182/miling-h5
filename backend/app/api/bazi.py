@@ -299,12 +299,32 @@ def _build_bazi_prompt(bazi_data: dict, question: str = "") -> str:
     wuxing = bazi_data['wuxing']['count']
     hidden = bazi_data['hidden_stems']
     ten_gods = bazi_data['ten_gods']
+    dayun = bazi_data.get('dayun', {})
+    dayun_list = dayun.get('list', [])
+    start_year = dayun.get('start_year', 1)
+    shensha = bazi_data.get('shensha', [])
+    di_shi = bazi_data.get('di_shi', {})
+    xun_kong = bazi_data.get('xun_kong', {})
+
+    # 大运信息
+    dayun_str = f"起运：{start_year}岁\n"
+    for dy in dayun_list[:10]:
+        dayun_str += f"  {dy['start_age']}岁起: {dy['ganzhi']}\n"
+
+    # 神煞信息
+    shensha_str = '、'.join(shensha) if shensha else '无明显神煞'
+
+    # 十二长生
+    di_shi_str = f"年柱{di_shi.get('year','')}，月柱{di_shi.get('month','')}，日柱{di_shi.get('day','')}，时柱{di_shi.get('hour','')}"
+
+    # 旬空
+    xun_kong_str = f"年柱{xun_kong.get('year','')}，月柱{xun_kong.get('month','')}，日柱{xun_kong.get('day','')}，时柱{xun_kong.get('hour','')}"
 
     prompt = f"""
-你是一位资深的八字命理师，请根据以下八字排盘数据，为用户进行专业且通俗易懂的解读。
+你是一位资深八字命理师，有30年实战经验，精通子平法。请根据以下八字排盘数据，为命主进行深度专业且通俗易懂的解读。
 
 【基本信息】
-命主：{bazi_data['gender_cn']}
+{'坤造（女命）' if bazi_data['gender_cn'] == '女' else '乾造（男命）'}
 出生：{bazi_data['solar_date']} {bazi_data['hour_name']}
 农历：{bazi_data['lunar_date']}
 
@@ -314,7 +334,7 @@ def _build_bazi_prompt(bazi_data: dict, question: str = "") -> str:
 日柱：{pillars['day']['ganzhi']}（{nayin['day']}）—— 日主
 时柱：{pillars['hour']['ganzhi']}（{nayin['hour']}）
 
-【五行统计（天干+地支藏干）】
+【五行统计】
 金：{wuxing['金']} 木：{wuxing['木']} 水：{wuxing['水']} 火：{wuxing['火']} 土：{wuxing['土']}
 
 【地支藏干】
@@ -324,60 +344,86 @@ def _build_bazi_prompt(bazi_data: dict, question: str = "") -> str:
 时支 {pillars['hour']['zhi']}：{'、'.join(hidden['hour'])}
 
 【十神】
-天干十神：年干 {ten_gods['gan']['year']}，月干 {ten_gods['gan']['month']}，时干 {ten_gods['gan']['hour']}
+天干十神：年干 {ten_gods['gan']['year']}，月干 {ten_gods['gan']['month']}，日干 日主，时干 {ten_gods['gan']['hour']}
 地支十神：年支 {'、'.join(ten_gods['zhi']['year'])}，月支 {'、'.join(ten_gods['zhi']['month'])}，日支 {'、'.join(ten_gods['zhi']['day'])}，时支 {'、'.join(ten_gods['zhi']['hour'])}
 
-用户的问题：{question if question else '请做全面的八字解读'}
+【十二长生】
+{di_shi_str}
 
-==================== 解读结构要求 ====================
+【旬空】
+{xun_kong_str}
 
-请严格按照以下四大模块进行解读，用 HTML 格式输出（rich-text 可直接渲染）：
+【神煞】
+{shensha_str}
+
+【大运排列】
+{dayun_str}
+
+用户的问题：{question if question else '请做全面的八字深度解读'}
+
+==================== 解读结构与深度要求 ====================
+
+请严格按照以下四大模块进行解读，每个模块都要有实质内容，不能泛泛而谈。
+用 HTML 格式输出（rich-text 可直接渲染）。
 
 <h3>一、原局核心格局解读</h3>
 
-<p><strong>1. 日主强弱与喜用神</strong></p>
-<p>判断日主身强/身弱/中和，说明判断依据（得令、得地、得势），明确指出喜用神和忌神分别是什么五行。</p>
+<p><strong>1. 日主强弱与格局取用</strong></p>
+<p>先判断日主身强/身弱/中和，必须说明判断依据：
+- 得令与否（月令对日主的生克关系）；
+- 得地与否（日主在地支有无根气，如长生、帝旺、墓库等）；
+- 得势与否（天干地支中同类五行的多寡）。
+然后明确指出喜用神和忌神分别是什么五行，以及格局层次（如伤官生财、七杀配印等）。</p>
 
 <p><strong>2. 十神性格与一生底色</strong></p>
-<p>逐个分析八字中透出的重要十神，说明每个十神对命主性格和人生的影响。重点分析月柱（性格核心）、日柱（自身特质）、时柱（晚年/子女）、年柱（早年/长辈）。</p>
+<p>逐柱分析四柱的十神组合，说明对命主性格和人生的影响：
+- <strong>月柱</strong>（性格核心、青年运势）：分析月干月支十神，说明性格底色和青年时期特点；
+- <strong>日柱</strong>（自身特质、中年运势）：分析日坐什么（羊刃、禄神、长生等），说明命主为人处世的方式；
+- <strong>时柱</strong>（晚年、子女）：分析时柱十神，说明晚年趋向和子女缘分；
+- <strong>年柱</strong>（早年、长辈）：分析年柱十神，说明家庭出身和早年环境。
+每个柱的分析都要结合具体干支和十神，不能空泛。</p>
 
 <p><strong>3. 感情、子女、家庭信息</strong></p>
-<p>分析婚姻感情运势、配偶特征、子女缘分、家庭关系等。</p>
+<p>重点分析：
+- 日支（夫妻宫）坐什么十神，配偶性格特征，婚姻感情吉凶；
+- 时柱（子女宫）十神配置，子女有无出息，与子女关系；
+- 原局有无桃花、孤鸾、红艳等影响感情的煞神；
+- 家庭关系整体走向。</p>
 
 <h3>二、原局隐患与注意</h3>
-<p>分析八字中的刑冲合害、五行偏枯等隐患，说明对人生哪些方面有影响：</p>
+<p>分析八字中的刑冲合害、五行偏枯等具体隐患，必须具体到哪些地支之间发生什么关系：</p>
 <ul>
-<li>健康方面：对应哪些脏腑容易出问题</li>
-<li>人事方面：哪些关系容易有矛盾</li>
+<li><strong>刑冲合害</strong>：原局地支之间有无相冲（如子午冲、卯酉冲）、相刑、相害、相合，说明对人生哪些方面有影响</li>
+<li><strong>五行偏枯</strong>：五行严重失衡的影响，哪些脏腑容易出问题，对应什么健康隐患</li>
+<li><strong>人事方面</strong>：哪些关系容易有矛盾（夫妻、子女、长辈、同辈）</li>
+<li><strong>特殊煞神</strong>：羊刃、孤鸾、亡神、劫煞等对命局的影响</li>
 </ul>
 
-<h3>三、大运走势分析</h3>
-<p>按大运顺序分析每步大运的吉凶趋势，重点讲当前大运和未来2-3步大运。每步大运说明：</p>
-<ul>
-<li>大运干支与原局的作用关系</li>
-<li>对事业、财运、感情、健康的影响</li>
-<li>整体运势评价</li>
-</ul>
+<h3>三、大运走势分段分析</h3>
+<p>按照大运顺序分段分析，不要每步大运都写一样的模板话，要区分吉凶和重点：
+- 标注每步大运的起止年龄和干支；
+- 分析大运干支与原局日主的生克关系（是喜用神还是忌神）；
+- 重点分析<strong>当前大运</strong>（根据命主年龄推算）和<strong>未来2-3步大运</strong>；
+- 对每步大运给出：事业财运趋势、感情家庭影响、健康提示、整体吉凶评价；
+- 如果是晚年命造，重点分析晚年各阶段运势走向，哪些大运是享福运、哪些是操劳运。</p>
 
 <h3>四、综合总结与建议</h3>
-<p>整体评价命局层次，给出实用建议：</p>
+<p>整体评价命局层次和一生走势，给出实用建议：</p>
 <ul>
-<li>事业发展方向建议</li>
-<li>财运理财建议</li>
-<li>感情经营建议</li>
-<li>健康养生建议</li>
-<li>改运/调候建议（根据喜用神）</li>
+<li><strong>事业财运</strong>：适合什么行业方向，财运高峰在什么年龄段</li>
+<li><strong>感情家庭</strong>：婚姻中要注意什么，如何经营家庭关系</li>
+<li><strong>健康养生</strong>：根据五行和刑冲，提示哪些健康问题要重点防范，日常如何调理</li>
+<li><strong>人生定论</strong>：用一两句话总结命主一生格局（如"先苦后甜"、"中年发迹"等），给出最核心的建议</li>
 </ul>
 
-==================== 输出要求 ====================
+==================== 输出风格要求 ====================
 
 1. 语言风格：通俗易懂，有温度，像经验丰富的命理师面对面聊天，不要教科书式堆砌术语
-2. 要有自己的判断和主见，不要模棱两可
-3. 好的坏的都要说，客观真实，不要只说好话
-4. 多用比喻和生活化的语言，少用生僻术语，用了要解释
-5. 字数 1500-2500 字，内容要充实
-6. 直接输出 HTML 内容，不要有其他说明文字
-7. 标题用 h3，重点内容用 strong，次级强调用 em，列表用 ul/li，段落用 p
+2. 要有自己的判断和主见，不要模棱两可，好话坏话都要说，客观真实
+3. 多用比喻和生活化的语言，少用生僻术语，用了要解释
+4. 分析要具体到干支和十神，不能只说"运势不错"这种空话
+5. 字数 2000-3500 字，内容要充实饱满
+6. 直接输出 HTML 内容，不要有任何前言后语
 
 【重要】HTML 样式要求（深色星空主题）：
 - 所有文字颜色用浅色系，适配深色背景
@@ -391,7 +437,7 @@ def _build_bazi_prompt(bazi_data: dict, question: str = "") -> str:
 
 直接输出带 style 内联样式的 HTML，例如：
 <h3 style="color:#d4a84b;font-size:18px;font-weight:bold;margin:20px 0 12px;">一、原局核心格局解读</h3>
-<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">1. 日主强弱与喜用神</strong></p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">1. 日主强弱与格局取用</strong></p>
 <p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">正文内容...</p>
 <ul style="color:#b0b0c8;font-size:14px;line-height:1.8;padding-left:20px;">
 <li style="margin:6px 0;">列表项</li>
@@ -768,49 +814,108 @@ def bazi_kline_status(task_id: str):
     return get_task(task_id)
 
 
+def _build_bazi_fallback_reading(bazi_data: dict) -> str:
+    """AI不可用时的兜底八字解读"""
+    pillars = bazi_data['pillars']
+    nayin = bazi_data['nayin']
+    wuxing = bazi_data['wuxing']['count']
+    ten_gods = bazi_data['ten_gods']
+    day_gan = pillars['day']['gan']
+    day_zhi = pillars['day']['zhi']
+    gender_cn = bazi_data['gender_cn']
+    
+    wx_desc = {
+        '木': '仁慈向上', '火': '热情礼仪', '土': '诚信稳重',
+        '金': '刚毅果断', '水': '智慧灵活'
+    }
+    
+    day_wx = WUXING_MAP.get(day_gan, '木')
+    sheng_wo = {'木': '水', '火': '木', '土': '火', '金': '土', '水': '金'}.get(day_wx, '')
+    wo_sheng = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}.get(day_wx, '')
+    ke_wo = {'木': '金', '火': '水', '土': '木', '金': '火', '水': '土'}.get(day_wx, '')
+    wo_ke = {'木': '土', '火': '金', '土': '水', '金': '木', '水': '火'}.get(day_wx, '')
+    
+    support = wuxing.get(day_wx, 0) + wuxing.get(sheng_wo, 0)
+    consume = wuxing.get(wo_sheng, 0) + wuxing.get(wo_ke, 0) + wuxing.get(ke_wo, 0)
+    is_strong = support >= consume
+    
+    if is_strong:
+        xiyong = f'{ke_wo}、{wo_ke}、{wo_sheng}'
+        jishi = f'{day_wx}、{sheng_wo}'
+    else:
+        xiyong = f'{day_wx}、{sheng_wo}'
+        jishi = f'{ke_wo}、{wo_ke}、{wo_sheng}'
+    
+    reading = f"""
+<h3 style="color:#d4a84b;font-size:18px;font-weight:bold;margin:20px 0 12px;">一、原局核心格局解读</h3>
+
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">1. 日主强弱与格局取用</strong></p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">日主<strong style="color:#d4a84b;">{day_gan}</strong>（{day_wx}），天性{wx_desc.get(day_wx, '')}。</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">{'' if is_strong else '不'}得令：月支{pillars['month']['zhi']}对日主{'' if is_strong else '不'}生助；{'' if is_strong else '不'}得地：日支{day_zhi}{'' if is_strong else '不'}为日主根气；{'' if is_strong else '不'}得势：命局中{day_wx}五行{'' if is_strong else '不'}占优势。</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">综合判断：<strong style="color:#d4a84b;">{'身强' if is_strong else '身弱'}</strong>。喜用神：{xiyong}；忌神：{jishi}。</p>
+
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">2. 十神性格与一生底色</strong></p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">年柱</strong> {pillars['year']['ganzhi']}（{ten_gods['gan']['year']}+{','.join(ten_gods['zhi']['year'])}）：早年家庭环境{'' if '杀' in ten_gods['gan']['year'] else '比较宽松'}，长辈管教{'' if '杀' in ten_gods['gan']['year'] else '不'}严格，靠自己打拼起家。</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">月柱</strong> {pillars['month']['ganzhi']}（{ten_gods['gan']['month']}+{','.join(ten_gods['zhi']['month'])}）：性格核心，青年运势。月干{ten_gods['gan']['month']}透出，{'' if '伤' in ten_gods['gan']['month'] else ''}{'' if '食' in ten_gods['gan']['month'] else ''}悟性{'' if '伤' in ten_gods['gan']['month'] else '较'}高，口才{'' if '伤' in ten_gods['gan']['month'] else '不'}出众，有主见。</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">日柱</strong> {pillars['day']['ganzhi']}：日坐{day_zhi}，{'' if '刃' in bazi_data.get('di_shi', {}).get('day', '') else ''}{'' if '禄' in bazi_data.get('di_shi', {}).get('day', '') else ''}{'' if '长生' in bazi_data.get('di_shi', {}).get('day', '') else ''}，性格{'' if '刃' in bazi_data.get('di_shi', {}).get('day', '') else '温和'}，{'' if '刃' in bazi_data.get('di_shi', {}).get('day', '') else ''}做事{'' if '刃' in bazi_data.get('di_shi', {}).get('day', '') else '谨慎'}。</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">时柱</strong> {pillars['hour']['ganzhi']}（{ten_gods['gan']['hour']}+{','.join(ten_gods['zhi']['hour'])}）：晚年运势，子女宫。时干{ten_gods['gan']['hour']}，子女{'' if '财' in ten_gods['gan']['hour'] else ''}{'' if '官' in ten_gods['gan']['hour'] else '比较普通'}有出息。</p>
+
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;"><strong style="color:#d4a84b;">3. 感情、子女、家庭信息</strong></p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">日支{day_zhi}为夫妻宫，配偶{'' if day_zhi in ['子', '午', '卯', '酉'] else '性格温和'}，婚姻{'' if day_zhi in ['子', '午', '卯', '酉'] else '比较稳定'}。时柱子女宫{'' if '财' in ten_gods['gan']['hour'] else ''}{'' if '官' in ten_gods['gan']['hour'] else ''}子女有能力。</p>
+
+<h3 style="color:#d4a84b;font-size:18px;font-weight:bold;margin:20px 0 12px;">二、原局隐患与注意</h3>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">五行分布：金{wuxing['金']}、木{wuxing['木']}、水{wuxing['水']}、火{wuxing['火']}、土{wuxing['土']}。{day_wx}偏旺，注意{'' if day_wx == '水' else ''}{'' if day_wx == '火' else ''}{'' if day_wx == '木' else ''}{'' if day_wx == '金' else ''}{'' if day_wx == '土' else ''}{'' if day_wx == '水' else '肾脏、泌尿'}{'' if day_wx == '火' else '心脏、眼睛'}{'' if day_wx == '木' else '肝胆、神经'}{'' if day_wx == '金' else '肺、呼吸'}{'' if day_wx == '土' else '脾胃、消化系统'}健康。</p>
+
+<h3 style="color:#d4a84b;font-size:18px;font-weight:bold;margin:20px 0 12px;">三、大运走势分析</h3>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">起运年龄：{bazi_data.get('dayun', {}).get('start_year', 1)}岁</p>
+<p style="color:#c0c0d8;font-size:14px;line-height:1.8;margin:10px 0;">人生运势分阶段发展，早年{'' if is_strong else '需要'}积累，中年{'' if is_strong else '逐步'}发展，晚年{'' if is_strong else '比较'}安稳。每步大运10年，遇到喜用神大运时机遇较多，忌神大运时宜守不宜攻。</p>
+
+<h3 style="color:#d4a84b;font-size:18px;font-weight:bold;margin:20px 0 12px;">四、综合总结与建议</h3>
+<ul style="color:#b0b0c8;font-size:14px;line-height:1.8;padding-left:20px;">
+<li style="margin:6px 0;"><strong style="color:#d4a84b;">事业财运</strong>：适合{'' if day_wx == '木' else ''}{'' if day_wx == '火' else ''}{'' if day_wx == '土' else ''}{'' if day_wx == '金' else ''}{'' if day_wx == '水' else ''}{'' if day_wx == '木' else '文化教育、创意设计'}{'' if day_wx == '火' else '能源电力、餐饮娱乐'}{'' if day_wx == '土' else '房地产、建筑建材'}{'' if day_wx == '金' else '金融银行、五金机械'}{'' if day_wx == '水' else '交通运输、贸易物流'}行业，财运高峰在{'' if is_strong else '中年'}。</li>
+<li style="margin:6px 0;"><strong style="color:#d4a84b;">感情家庭</strong>：婚姻需要用心经营，多体谅对方，避免冲动争吵。</li>
+<li style="margin:6px 0;"><strong style="color:#d4a84b;">健康养生</strong>：注意{'' if day_wx == '水' else ''}{'' if day_wx == '火' else ''}{'' if day_wx == '木' else ''}{'' if day_wx == '金' else ''}{'' if day_wx == '土' else ''}{'' if day_wx == '水' else '肾脏'}{'' if day_wx == '火' else '心脏'}{'' if day_wx == '木' else '肝胆'}{'' if day_wx == '金' else '肺'}{'' if day_wx == '土' else '脾胃'}保养，{'' if day_wx == '水' else ''}{'' if day_wx == '火' else ''}{'' if day_wx == '木' else ''}{'' if day_wx == '金' else ''}{'' if day_wx == '土' else ''}{'' if day_wx == '水' else '少熬夜、少吃寒凉'}{'' if day_wx == '火' else '少生气、饮食清淡'}{'' if day_wx == '木' else '少喝酒、作息规律'}{'' if day_wx == '金' else '戒烟、多运动'}{'' if day_wx == '土' else '少吃生冷、注意保暖'}。</li>
+<li style="margin:6px 0;"><strong style="color:#d4a84b;">人生定论</strong>：此造{'' if is_strong else '先弱后强'}，{'' if is_strong else '中年后'}运势上升，属于{'' if is_strong else '厚积薄发'}之命。</li>
+</ul>
+"""
+    return reading.strip()
+
+
 @router.post("/reading/start")
 def bazi_reading_start(
     req: BaziReadingRequest,
     current_user: User = Depends(get_current_user),
 ):
-    task_id = str(uuid.uuid4())
-    create_task(task_id)
-
-    # 在线程启动前提取所有需要的参数，避免线程中使用 SQLAlchemy 对象
     ai_provider_name = current_user.ai_provider or "mock"
     ai_api_key = current_user.ai_api_key
     ai_model = current_user.ai_model
     ai_base_url = current_user.ai_base_url
 
-    date_str = req.date_str
-    hour_index = req.hour_index
-    gender = req.gender
-    is_lunar = req.is_lunar
-    is_leap = req.is_leap
-    question = req.question
+    try:
+        bazi_data = calculate_bazi(
+            date_str=req.date_str,
+            hour_index=req.hour_index,
+            gender=req.gender,
+            is_lunar=req.is_lunar,
+            is_leap=req.is_leap,
+        )
 
-    def _generate():
-        try:
-            bazi_data = calculate_bazi(
-                date_str=date_str,
-                hour_index=hour_index,
-                gender=gender,
-                is_lunar=is_lunar,
-                is_leap=is_leap,
-            )
-            prompt = _build_bazi_prompt(bazi_data, question)
+        if ai_provider_name == "mock":
+            reading_text = _build_bazi_fallback_reading(bazi_data)
+        else:
+            prompt = _build_bazi_prompt(bazi_data, req.question)
             system_prompt = "你是一位资深的八字命理师，有20年以上实战经验，擅长用通俗易懂的语言解读命盘。解读要有温度、有主见，客观真实，像朋友聊天一样，不要用教科书式的表述。"
-            ai_provider = get_ai_provider(ai_provider_name, api_key=ai_api_key, model=ai_model, base_url=ai_base_url)
-            reading_text = ai_provider.chat(system_prompt, prompt)
-            update_task(task_id, {"bazi": bazi_data, "reading": reading_text})
-        except Exception as e:
-            fail_task(task_id, str(e))
+            try:
+                ai_provider = get_ai_provider(ai_provider_name, api_key=ai_api_key, model=ai_model, base_url=ai_base_url)
+                reading_text = ai_provider.chat(system_prompt, prompt)
+            except Exception as ai_err:
+                import logging
+                logging.getLogger("uvicorn.error").warning(f"八字AI解读失败: {ai_err}")
+                reading_text = _build_bazi_fallback_reading(bazi_data)
 
-    thread = threading.Thread(target=_generate)
-    thread.daemon = True
-    thread.start()
-
-    return {"task_id": task_id, "status": "processing"}
+        return {"task_id": "sync", "status": "done", "result": {"bazi": bazi_data, "reading": reading_text}}
+    except Exception as e:
+        return {"task_id": "sync", "status": "failed", "error": str(e)}
 
 
 @router.get("/reading/status/{task_id}")

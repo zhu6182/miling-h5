@@ -66,7 +66,7 @@ def analyze_love_match(chart_a: Dict, chart_b: Dict) -> Dict[str, Any]:
     }
 
 
-def analyze_career_match(chart_a: Dict, chart_b: Dict) -> Dict[str, Any]:
+def analyze_career_match(chart_a: Dict, chart_b: Dict, name_a: str = "A", name_b: str = "B") -> Dict[str, Any]:
     """事业合作匹配分析"""
     career_a = None
     career_b = None
@@ -107,14 +107,19 @@ def analyze_career_match(chart_a: Dict, chart_b: Dict) -> Dict[str, Any]:
     score = min(95, max(30, score))
 
     roles = []
-    if opener_a:
-        roles.append("A是开拓型")
-    if keeper_a:
-        roles.append("A是稳健型")
-    if opener_b:
-        roles.append("B是开拓型")
-    if keeper_b:
-        roles.append("B是稳健型")
+    if opener_a and keeper_a:
+        roles.append(f"{name_a}是综合型(开拓+稳健)")
+    elif opener_a:
+        roles.append(f"{name_a}是开拓型")
+    elif keeper_a:
+        roles.append(f"{name_a}是稳健型")
+    
+    if opener_b and keeper_b:
+        roles.append(f"{name_b}是综合型(开拓+稳健)")
+    elif opener_b:
+        roles.append(f"{name_b}是开拓型")
+    elif keeper_b:
+        roles.append(f"{name_b}是稳健型")
 
     tags = []
     if score >= 80:
@@ -215,14 +220,20 @@ def analyze_mentor_match(chart_a: Dict, chart_b: Dict) -> Dict[str, Any]:
     }
 
 
-def calculate_full_match(chart_a: Dict, chart_b: Dict, match_type: str = "all") -> Dict[str, Any]:
+def calculate_full_match(chart_a: Dict, chart_b: Dict, match_type: str = "all",
+                         name_a: str = "A", name_b: str = "B") -> Dict[str, Any]:
     """完整匹配分析"""
     results = {}
 
-    if match_type in ("all", "love"):
+    # 同性别跳过姻缘配对
+    gender_a = chart_a.get('gender', '')
+    gender_b = chart_b.get('gender', '')
+    same_gender = gender_a == gender_b
+
+    if match_type in ("all", "love") and not same_gender:
         results["love"] = analyze_love_match(chart_a, chart_b)
     if match_type in ("all", "career"):
-        results["career"] = analyze_career_match(chart_a, chart_b)
+        results["career"] = analyze_career_match(chart_a, chart_b, name_a, name_b)
     if match_type in ("all", "friendship"):
         results["friendship"] = analyze_friendship_match(chart_a, chart_b)
     if match_type in ("all", "mentor"):

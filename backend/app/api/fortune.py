@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, datetime, timedelta
 import json
+import random as _random
 
 from app.core.database import get_db
 from app.api.deps import get_current_user

@@ -1,6 +1,10 @@
 <template>
   <header class="nav-bar">
-    <div v-if="showBack" class="nav-back" @click="$router.back()">‹</div>
+    <div v-if="showBack" class="nav-back" @click="$router.back()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </div>
     <div class="nav-title">{{ title }}</div>
     <div class="nav-right">
       <slot name="right"></slot>
@@ -16,17 +20,16 @@ const router = useRouter()
 
 const title = computed(() => {
   const titles = {
-    'Index': '星运日记',
-    'Match': '星座配对',
-    'Profile': '我的',
+    'Index': '',
+    'Match': '八字合缘',
+    'Profile': '个人中心',
     'Fortune': '今日运势',
-    'BirthInput': '星座信息录入',
-    'ChartDetail': '星盘详情',
-    'MatchResult': '配对结果',
-    'BaziDetail': '八字详情',
+    'BirthInput': '输入生辰',
+    'ChartDetail': '命盘详情',
+    'BaziDetail': '八字排盘',
     'LifeKline': '人生K线'
   }
-  return titles[router.currentRoute.value.name] || '星运日记'
+  return titles[router.currentRoute.value.name] || ''
 })
 
 const showBack = computed(() => !router.currentRoute.value.meta.showTabBar)
@@ -34,38 +37,49 @@ const showBack = computed(() => !router.currentRoute.value.meta.showTabBar)
 
 <style scoped>
 .nav-bar {
-  height: 88rpx;
-  background: #0f0f20;
+  height: 56px;
+  background: rgba(5, 5, 16, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  border-bottom: 1rpx solid rgba(201, 160, 80, 0.1);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
   flex-shrink: 0;
-  padding: 0 32rpx;
+  padding: 0 16px;
+  z-index: 100;
 }
 
 .nav-title {
-  font-size: 32rpx;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
   font-weight: 600;
-  color: #e0e0f0;
+  color: #f5f5f7;
+  letter-spacing: 2px;
 }
 
 .nav-back {
   position: absolute;
-  left: 24rpx;
-  font-size: 48rpx;
-  color: #c9a050;
-  cursor: pointer;
-  width: 60rpx;
-  height: 60rpx;
+  left: 12px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #d4af37;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.nav-back:active {
+  background: rgba(212, 175, 55, 0.1);
+  transform: scale(0.9);
 }
 
 .nav-right {
   position: absolute;
-  right: 24rpx;
+  right: 16px;
 }
 </style>

@@ -36,6 +36,7 @@ def auto_migrate():
         existing_cols = {c['name'] for c in inspector.get_columns('users')}
         
         user_new_columns = [
+            ('username', 'VARCHAR(50)'),
             ('is_admin', 'BOOLEAN DEFAULT 0'),
             ('email', 'VARCHAR(100)'),
             ('last_active_at', 'TIMESTAMP'),

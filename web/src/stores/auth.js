@@ -25,18 +25,18 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('userInfo')
   }
 
-  async function login(phone, password) {
-    const res = await request.post('/auth/login', { phone, password })
+  async function login(username, password) {
+    const res = await request.post('/auth/login', { username, password })
     setToken(res.access_token)
     setUser(res.user)
     return res
   }
 
-  async function register(phone, password, nickname) {
+  async function register(username, password, nickname) {
     const res = await request.post('/auth/register', { 
-      phone, 
+      username, 
       password, 
-      nickname: nickname || '星运用户' 
+      nickname: nickname || username 
     })
     setToken(res.access_token)
     setUser(res.user)
