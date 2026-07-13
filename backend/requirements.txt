@@ -11,3 +11,4 @@ requests==2.31.0
 qrcode==7.4.2
 Pillow==10.1.0
 lunar-python==1.4.8
+iztro-py==0.3.5
